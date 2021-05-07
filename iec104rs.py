@@ -37,7 +37,7 @@
 #	iec104rs.py - socket, ieee754, microseconds
 #
 # File: iodata.csv
-#     Contains the IO database as comma delimited format.
+#     IO database as comma separated values (csv).
 #	  all RTUs can share same iodata.csv file or have
 #	  separated file for each RTU.
 #
@@ -82,7 +82,7 @@ help2="example1: iec104rs -i iec104rs1.csv\n"
 help3="example2: iec104rs --ntp_server pool.ntp.org --ntp_server time.windows.com\n"
 help4="-s or --ntp_server could be included multiple times for multiple servers.\n"
 help5="\t -h or --help\t\t\t\thelp message.\n"
-help6="\t -i or --ini\t\t\t\tinit file (comma delimited format), default iec104rs.csv.\n"
+help6="\t -i or --ini\t\t\t\tinit file (comma separated values), default iec104rs.csv.\n"
 help7="\t -t or --ntp_update_every_sec\t\tNTP update interval, default=900 seconds (requires admin privilege).\n"
 help8="\t -s or --ntp_server\t\t\tNTP server, could be included multiple times (requires admin privilege).\n"
 helpmess=help1+help2+help3+help4+help5+help6+help7+help8
