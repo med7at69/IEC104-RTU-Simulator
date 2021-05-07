@@ -8,8 +8,8 @@ This is an IEC 104 RTU simulator. It can simulate any number of RTUs or servers.
 The project contains the following files:
 
 iec104rs.py: The code in python language.
-iec104rs.csv: ini file in comma delimeted formats. Must be in the same folder of iec104rs.py
-iodata.csv: IOA data files in comma delimeted formats. Must be in "data" folder.
+iec104rs.csv: ini file in comma separated values. Must be in the same folder of iec104rs.py
+iodata.csv: IOA data files in comma separated values. Must be in "data" folder.
 
 Command arguments:
 # -h or --help					help message
