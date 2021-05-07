@@ -21,7 +21,7 @@ When the iec104rs.py program starts it will:
 1- Read the command arguments.
 2- if ini file is not provided in command arguments then the default is iec104rs.csv
 3- Read the ini file to get the NTP servers and RTUs as descriped below.
-4- Eah RTU should have name, RTU number, port number to listen on and IOA data file (in "data" folder)
+4- Each RTU should have name, RTU number, port number to listen on and IOA data file (in "data" folder)
 
 ===========================================================================
 
