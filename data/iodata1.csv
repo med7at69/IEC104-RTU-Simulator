@@ -1,4 +1,5 @@
-"# IOA data file in comma delimited format (.csv). Should be in folder ""data"" under main folder of the program iec104rs",,,,,,
+#" IOA data file in comma delimited format (.csv). Should be in folder ""data"" under main folder of the program iec104rs",,,,,,
+# If first character of first column in any row is ! Then GI will cancel rest of the rows.,,,,,,,
 # Supported types:,,,,,,
 #,"SPI (1,30)",OFF = 0,ON = 1,,,
 #,"DPI(3,31)",OFF = 01,ON = 02,XX = 00/11,,
