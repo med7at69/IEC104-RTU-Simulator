@@ -5,7 +5,7 @@ IEC104-RTU-Simulator
 #  	By M. Medhat - MJEC - 7 Feb 2020 - Ver 1.0
 # ******************************************************
 This is an IEC 104 RTU simulator. It can simulate any number of RTUs or servers.
-The project contains the following file:
+The project contains the following files:
 
 iec104rs.py: The code in python language.
 iec104rs.csv: ini file in comma delimeted formats. Must be in the same folder of iec104rs.py
