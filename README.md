@@ -11,6 +11,18 @@ iec104rs.py: The code in python language.
 iec104rs.csv: ini file in comma delimeted formats. Must be in the same folder of iec104rs.py
 iodata.csv: IOA data files in comma delimeted formats. Must be in "data" folder.
 
+Command arguments:
+# -h or --help					help message
+# -i or --ini					init file
+# -t or --ntp_update_every_sec			NTP update interval
+# -s or --ntp_server				NTP server
+
+When the iec104rs.py program starts it will:
+1- Read the command arguments.
+2- if ini file is not provided in command arguments then the default is iec104rs.csv
+3- Read the ini file to get the NTP servers and RTUs as descriped below.
+4- Eah RTU should have name, RTU number, port number to listen on and IOA data file (in "data" folder)
+
 ===========================================================================
 
 ini file (iec104rs.csv) example with explanations
