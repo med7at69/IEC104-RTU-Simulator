@@ -14,7 +14,7 @@ ntp_update_every_sec,900,,,,,,
 # hosts: a list of hosts/net separated by ; which will only be accepted to connect to the specific RTU.,,,,,,,
 # k: the IEC 104 k constant. Default is 12 packets.,,,,,,,
 # idletime: time in seconds. If no data for idletime seconds the RTU connection will be disconnected.,,,,,,,
-"# io data files (iodata.csv) should be in ""data"" folder in the same folder of the program iec104rs",,,,,,,
+"# io data files (iodata.csv) should be in ""data"" folder in the same folder where the program starts in",,,,,,,
 # id,sys name,rtu no,port no,hosts, k,idletime, iodata.csv
 1,ABB,32,2404,192.168.1.16;127.0.0.0/24;10.1.1.0/24,12,60,iodata1.csv
 #,ABB,32,2405,192.168.1.16;127.0.0.0/24;10.1.1.0/24,12,60,iodata1.csv

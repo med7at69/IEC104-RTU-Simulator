@@ -1,6 +1,6 @@
 # ******************************************************
 #  	         IEC 104 RTU simulator
-#  	By M. Medhat - MJEC - 7 Feb 2020 - Ver 1.0
+#  	By M. Medhat - 7 Feb 2020 - Ver 1.0
 # ******************************************************
 https://github.com/med7at69/IEC104-RTU-Simulator
 
@@ -11,11 +11,11 @@ iec104rs.py: The code in python language.
 iec104rs.csv: ini file in comma separated values. Must be in the same folder of iec104rs.py
 iodata.csv: IOA data files in comma separated values. Must be in "data" folder.
 
-Command arguments:
-# -h or --help					help message
-# -i or --ini					init file
-# -t or --ntp_update_every_sec			NTP update interval
-# -s or --ntp_server				NTP server
+Program arguments:
+ -h or --help				display help message.
+ -i or --ini				specify init file name.
+ -t or --ntp_update_every_sec		NTP update interval (seconds).
+ -s or --ntp_server			NTP server (may repeated for multiple servers).
 
 When the iec104rs.py program starts it will:
 1- Read the command arguments.

@@ -53,13 +53,12 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter.font import Font
 from tkinter import messagebox
-import ctypes
 from getopt import getopt
 from ipaddress import ip_address,ip_network
 import threading
-from os import remove,stat,mkdir,system
+from os import remove,stat,mkdir,system,name
 from datetime import datetime
-from socket import socket,AF_INET,SOCK_STREAM,SOL_SOCKET,SO_REUSEADDR,SHUT_RDWR,error,timeout,SOCK_DGRAM
+from socket import socket,AF_INET,SOCK_STREAM,SOL_SOCKET,SO_REUSEADDR,SHUT_RDWR,error,timeout,SOCK_DGRAM,gaierror
 from binascii import hexlify
 from signal import signal,SIGTERM
 from struct import unpack,pack
@@ -68,8 +67,13 @@ from sys import argv,byteorder,exit
 from time import time,sleep
 from os.path import isfile,getsize
 from csv import reader
-from win32api import SetSystemTime
 from atexit import register
+if name == 'nt':
+	from win32api import SetSystemTime
+else:
+	from os import WIFEXITED,WEXITSTATUS
+
+#import ctypes
 
 # ******************************************************
 #                       Variables
@@ -86,9 +90,15 @@ help6="\t -i or --ini\t\t\t\tinit file (comma separated values), default iec104r
 help7="\t -t or --ntp_update_every_sec\t\tNTP update interval, default=900 seconds (requires admin privilege).\n"
 help8="\t -s or --ntp_server\t\t\tNTP server, could be included multiple times (requires admin privilege).\n"
 helpmess=help1+help2+help3+help4+help5+help6+help7+help8
-dir='log\\'
-datadir='data\\'
-initfile='iec104rs.csv'
+if name == 'nt':
+	dir='log\\'
+	datadir='data\\'
+	initfile='iec104rs.csv'
+else:
+	dir='./log/'
+	datadir='./data/'
+	initfile='./iec104rs.csv'
+
 ntpserver=[]
 timeupdated=''
 updatetimegui=0
@@ -99,7 +109,12 @@ pulsemess='No pulseShort   Long    Persist '
 valuemess='OFFON '
 regmess='DECREMENTINCREMENT'
 
-is_admin = ctypes.windll.shell32.IsUserAnAdmin() != 0
+'''
+if name == 'nt':
+	is_admin = ctypes.windll.shell32.IsUserAnAdmin() != 0
+else:
+	is_admin = 2		# not windows so no need for NTP updates.
+'''
 
 # cmd program files
 cmdtime=0
@@ -913,7 +928,7 @@ def gettime_ntp(addr='time.nist.gov'):
             epoch_time = unpack( '!12I', data )[10]
             epoch_time -= TIME1970
             return epoch_time
-    except timeout:
+    except (timeout, gaierror):
         return None
 
 def ntpthread():
@@ -922,19 +937,32 @@ def ntpthread():
 	while True:
 		if exitprogram:
 			break
-		#timeupdated=''
 		for server in ntpserver:
 			epoch_time = gettime_ntp(server)
 			if epoch_time is not None:
-				# SetSystemTime takes time as argument in UTC time. UTC time is obtained using utcfromtimestamp()
-				utcTime = datetime.utcfromtimestamp(epoch_time)
-				SetSystemTime(utcTime.year, utcTime.month, utcTime.weekday(), utcTime.day, utcTime.hour, utcTime.minute, utcTime.second, 0)
 				# Local time is obtained using fromtimestamp()
-				localTime = datetime.fromtimestamp(epoch_time)
-				timeupdated="Time updated at: " + localTime.strftime("%Y-%m-%d %H:%M:%S") + " from " + server[0:0+50]
+				localTime = datetime.fromtimestamp(epoch_time).strftime("%Y-%m-%d %H:%M:%S")
+				timeupdated="Time updated at: " + localTime + " from " + server[0:0+50]
+				try:
+					if name == 'nt':			# windows
+						# SetSystemTime takes time as argument in UTC time. UTC time is obtained using utcfromtimestamp()
+						utcTime = datetime.utcfromtimestamp(epoch_time)
+						SetSystemTime(utcTime.year, utcTime.month, utcTime.weekday(), utcTime.day, utcTime.hour, utcTime.minute, utcTime.second, 0)
+					else:
+						localTimetoset = datetime.fromtimestamp(epoch_time).strftime("%H:%M:%S")
+						exitcode = system(f'date +%T -s {localTimetoset}')
+						if WIFEXITED(exitcode):
+							if WEXITSTATUS(exitcode):
+								timeupdated = "No root privilege, cannot update time."
+				except (IOError, BaseException ) as e:
+					if name == 'nt':
+						if e.args[0] == 1314:
+							timeupdated = "No admin privilege, cannot update time."
+					else:
+						if (e[0] == errno.EPERM):
+							timeupdated = "No root privilege, cannot update time."
 				break
 		updatetimegui=1
-		
 		sleep(timeupdateevery)
 
 # define iec104 thread
@@ -1099,10 +1127,10 @@ def restartaction(self,ind):
 	tmplist[self.threadID]='0'
 	if not portno or not rtuno or not sysname:
 		messagebox.showerror("Error", 'Port, RTU numbers and System name are required.')
-	elif portno in tmplist:
-		messagebox.showerror("Error", f'Wrong port {portno}, already used for other RTUs.')
 	elif not int(rtuno) or not int(portno):
 		messagebox.showerror("Error", f'Wrong port {portno} or rtu {rtuno}, must not equal zero.')
+	elif portno in tmplist:
+		messagebox.showerror("Error", f'Wrong port {portno}, already used for other RTUs.')
 	elif not isfile(datadir + iodata):
 		messagebox.showerror("Error", f'IOA data file {datadir + iodata}, is not exist')
 	# confirm from user
@@ -1465,7 +1493,7 @@ ent_filter1.grid(row=row, column=9, sticky="nsew")
 CreateToolTip(ent_filter1,"Enter new hosts or networks filters separated by ;\nexample: 192.168.1.0/24;10.10.1.2")
 ent_iodata1=tk.Entry(frame1, name='iodata', validate ="key", validatecommand =(reg, '%P', '%S', '%W'), relief=tk.GROOVE, width=25,bg="light yellow", fg="blue")
 ent_iodata1.grid(row=row, column=10)
-CreateToolTip(ent_iodata1,'Enter new IOA data csv file.\nMust be in "data" folder.')
+CreateToolTip(ent_iodata1,f'Enter new IOA data csv file.\nMust be in "{datadir}" folder.')
 btn_restart1 = tk.Button(master=frame1, text="Restart")
 btn_restart1.grid(row=row, column=11,rowspan=2,sticky="nw")
 CreateToolTip(btn_restart1,"Restart\nwith new\nsettings.")
@@ -1515,7 +1543,7 @@ ent_filter2.grid(row=row, column=9, sticky="nsew")
 CreateToolTip(ent_filter2,"Enter new hosts or networks filters separated by ;\nexample: 192.168.1.0/24;10.10.1.2")
 ent_iodata2=tk.Entry(frame2, name='iodata', validate ="key", validatecommand =(reg, '%P', '%S', '%W'), relief=tk.GROOVE, width=25,bg="light yellow", fg="blue")
 ent_iodata2.grid(row=row, column=10)
-CreateToolTip(ent_iodata2,'Enter new IOA data csv file.\nMust be in "data" folder.')
+CreateToolTip(ent_iodata2,f'Enter new IOA data csv file.\nMust be in "{datadir}" folder.')
 btn_restart2 = tk.Button(master=frame2, text="Restart")
 btn_restart2.grid(row=row, column=11,rowspan=2, sticky="nw")
 CreateToolTip(btn_restart2,"Restart\nwith new\nsettings.")
@@ -1553,7 +1581,7 @@ if isfile(initfile):
 			elif row[0] == 'ntp_server' and row[1]:
 				ntpserver.append(row[1])
 			# RTUs settings - each row should start with integer, has rtuno, portno and exist iodata file.
-			elif row[0].isdigit() and row[2].isdigit() and row[3].isdigit() and row[3] not in portnolist and int(row[2]) <= 65535 and int(row[3]) <= 65535 and isfile(datadir + row[7]):
+			elif row[0].isdigit() and row[2].isdigit() and row[3].isdigit() and row[3] not in portnolist and int(row[2]) in range(1,65535) and int(row[3]) in range(1,65535) and isfile(datadir + row[7]):
 				portnolist.append(row[3])
 				# generate unique log file names
 				dt=datetime.now()
@@ -1607,13 +1635,15 @@ ABB45678 Offline, RTU: 12345, Port: 12345, GI: Running, Index sent: 123456789012
 '''
 # starting thread of ntp server update
 if	ntpserver:
-	if is_admin:
-		lbl_adminpriv.configure(text='Trying NTP servers to update local time ..',fg='red')
-		tmpth = threading.Thread(target=ntpthread, daemon=True)
-		th.append(tmpth)
-		tmpth.start()
-	else:
-		lbl_adminpriv.configure(text='No admin privilege, cannot update time',fg='red')
+	#if is_admin == 2:
+	#	lbl_adminpriv.configure(text='NTP time updates supported under windows only.',fg='blue')
+	#elif is_admin:
+	lbl_adminpriv.configure(text='Trying NTP servers to update local time ..',fg='red')
+	tmpth = threading.Thread(target=ntpthread, daemon=True)
+	th.append(tmpth)
+	tmpth.start()
+	#else:
+	#	lbl_adminpriv.configure(text='No admin privilege, cannot update time',fg='red')
 	
 if not noofrtu:
 	messagebox.showerror("Error", f'Found {noofrtu} RTUs .. Exiting.\nTry "-h" or "--help"')
@@ -1634,11 +1664,16 @@ while True:
 			break
 
 		# update ntp gui
-		if timeupdated:
+		if 'Time updated' in timeupdated:
 			lbl_adminpriv.configure(text=timeupdated,fg='green')
 			timeupdated=''
 			updatetimegui=0
+		elif 'privilege' in timeupdated:
+			lbl_adminpriv.configure(text=timeupdated,fg='red')
+			timeupdated=''
+			updatetimegui=0
 		elif updatetimegui:
+			timeupdated=''
 			updatetimegui=0
 			lbl_adminpriv.configure(fg='red')
 
