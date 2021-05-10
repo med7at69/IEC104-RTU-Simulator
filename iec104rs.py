@@ -2,7 +2,7 @@
 #
 # ******************************************************
 #  	         IEC 104 RTU simulator
-#  	By M. Medhat - 7 Feb 2020 - Ver 1.0
+#  	By M. Medhat - 7 Feb 2021 - Ver 1.0
 # ******************************************************
 # Revision history:
 #  Ver 0.0 - Tested startdt, GI and dummy dpi.
