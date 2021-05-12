@@ -1057,8 +1057,8 @@ class iec104thread (threading.Thread):
 											"Open log file", 
 											"Open iodata file",
 											"Open GI log file",
-											"Show log in textbox 1",
-											"Show log in textbox 2"])
+											"Show log in Tab2-Text1",
+											"Show log in Tab2-Text2"])
 		self.cbx_action.grid(row=self.threadID, column=8)
 		CreateToolTip(self.cbx_action,"Select acction to be applied/executed.")
 		self.btn_apply=tk.Button(master=frame, text="Apply", command=lambda: applyaction(self))
@@ -1407,8 +1407,8 @@ tab_parent = ttk.Notebook(window)
 tab_canvas = ttk.Frame(tab_parent)
 tab_textbox = ttk.Frame(tab_parent)
 
-tab_parent.add(tab_canvas, text="Full RTU list")
-tab_parent.add(tab_textbox, text="Comparisons of log files")
+tab_parent.add(tab_canvas, text="Tab1: Full RTU list")
+tab_parent.add(tab_textbox, text="Tab2: Log files and data edit")
 
 #tab_parent.pack(expand=1, fill='both')
 tab_parent.grid(row=3, column=1,columnspan=127,rowspan=64,sticky="nsew")
@@ -1507,7 +1507,7 @@ text_box1['yscrollcommand'] = sb1.set
 #text_box1.insert(tk.END, f'x={x}, y={y}')
 #text_box1.bind("<Key>", lambda a: "break")
 text_box1.config(state=tk.DISABLED)
-CreateToolTip(text_box1,"Log file of the selected System/RTU is displayed here..")
+CreateToolTip(text_box1,"Tab2-text1: Log file of the selected System/RTU is displayed here..")
 
 # second frame and textbox2
 frame2 = tk.Frame(tab_textbox)
@@ -1557,7 +1557,7 @@ text_box2['yscrollcommand'] = sb2.set
 #text_box2.insert(tk.END, f'x={x}, y={y}')
 #text_box2.bind("<Key>", lambda a: "break")
 text_box2.config(state=tk.DISABLED)
-CreateToolTip(text_box2,"Log file of the selected System/RTU is displayed here..")
+CreateToolTip(text_box2,"Tab2-text2: Log file of the selected System/RTU is displayed here..")
 
 window.protocol("WM_DELETE_WINDOW", on_closing)
 
