@@ -30,34 +30,55 @@ Readme.txt
 LICENSE file.
 
 Program arguments:
+
  -h or --help				display help message.
+ 
  -i or --ini				specify init file name.
+ 
  -t or --ntp_update_every_sec		NTP update interval (seconds).
+ 
  -s or --ntp_server			NTP server (may repeated for multiple servers).
 
 Program operation
 
 Program operation depends on providing huge data either for RTUs that the program to simulate or for the IOA signals provided for each RTU. To make the program operation as simple as possible I tried to use the comma separated values file (csv) format to provide the data to the program for the following reasons:
+
 1-	“csv” format is simple and well known since long time.
+
 2-	Besides supported by Microsoft Excel, there are many freeware programs supporting editing “csv” files.
+
 3-	It is easy to add, delete, copy and paste large number of data entries to the “csv” files without complications.
 
 Program operation is based on the following files:
+
 1-	Initial file (default name is iec104rs.csv): It is a comma separated values file format or “.csv” which should be available in the same folder where program starts in. In the file you can define the following:
+
 	a. NTP servers to update local time of the PC (requires admin/root privilege).
+	
 	b. Number of seconds to periodically update local time from NTP servers.
+	
 	c. Any number of RTUs or systems to be simulated by the program.
+	
 2-	IOA database file (for example iodata.csv): It is a comma separated values file format or “.csv” which should be in folder “data”. Folder “Data” should be in the same folder where the program starts in. In the file you can define the IOA signals such that SPI, DPI, NVA, SVA, FLT, SCO, DCO, RCO. Each RTU may have separated IOA data file or multiple RTUs can share the same IOA signals data file. In the IOA database file, IO signals are indexed and grouped by index numbers. You can send IO signals from all RTUs to the connected SCADA master stations at once by using index numbers.
+
 3-	Log files for all RTUs are saved in folder “log”. Folder “log” will be created in the same folder where the program starts in.
 
 When the program starts it will:
+
 1-	Read the program arguments if provided by user.
+
 2-	If initial file is not provided in program arguments, then the program will use the default iec104rs.csv
+
 3-	Read the initial file to get the NTP servers and RTUs as described later.
+
 4-	Each RTU should have name, RTU number, port number to listen on and IOA data file (in "data" folder).
+
 5-	To speed up the loading of RTUs, program will not start any RTU connection until load all RTUs in memory.
+
 6-	If user type index number and press “send” button, then the program will send all IO signals grouped by this index number in all IOA database files of different RTUs to the connected master stations. This function is helpful specially when you want to compare between two SCADA master stations, for example one new and the other is the legacy working system.
+
 7-	The simulator will not send “Testfr act” but it will wait until receiving “testfr act” from the connected SCADA system and will reply by “testfr con” and log the test frame period in the RTU log file.
+
 8-	If idle time (configured in the initial file for each RTU in seconds) passed without send/receive data then the program simulator will disconnect the connection to restart working connection again.
 
 ===========================================================================
