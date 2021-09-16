@@ -3,10 +3,6 @@
 #  	By M. Medhat - 7 Feb 2021 - Ver 1.0
 # ******************************************************
 
-If this project help you reduce time to develop, you can let me know :)
-
-[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](medhat100@hotmail.com)
-
 
 Introduction and why I wrote this program
 
