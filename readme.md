@@ -18,15 +18,23 @@ So, by indexing the IO signals in the IOA database files we succeeded to send sa
 -	Measure test frame period. For that reason, the simulator will not send “Testfr act” but it will wait until receiving “testfr act” from the connected SCADA system and will reply by “testfr con” and log the test frame period in the RTU log file.
 
 Program is distributed under GPL license and could be found on GitHub:
+
 https://github.com/med7at69/IEC104-RTU-Simulator
+
 It is written in python3 language and code is supporting both Windows and Linux OS.
 
 Package contains the following files:
+
 iec104rs.py: The code in python 3 language.
+
 iec104rs.csv: ini file in comma separated values. Must be in the same folder where program starts in.
+
 “data” folder with samples “iodata.csv” files which are IOA data files in comma separated values. Must be kept in "data" folder. “data” folder must be in the same folder where program starts in.
+
 Iec104rs.pdf: Help file in pdf format.
+
 Readme.txt
+
 LICENSE file.
 
 Program arguments:
