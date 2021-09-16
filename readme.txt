@@ -3,9 +3,6 @@
 #  	By M. Medhat - 7 Feb 2021 - Ver 1.0
 # ******************************************************
 
-If this project help you reduce time to develop, you can let me know :)
-[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](medhat100@hotmail.com)
-
 Introduction and why I wrote this program
 
 IEC 104 RTU simulator is a program to simulate the operation of RTU (remote terminal unit) or server as defined by protocol IEC 60870-5-104. It can simulate any number of RTUs or servers. Simulated RTUs could be connected to different or same SCADA master station. IO signals are indexed and grouped by using index numbers. You can send IO signals from all RTUs to the connected SCADA master stations at once by using index number.
