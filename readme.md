@@ -14,6 +14,18 @@ Introduction and why I wrote this program
 
 IEC 104 RTU simulator is a program to simulate the operation of RTU (remote terminal unit) or server as defined by protocol IEC 60870-5-104. It can simulate any number of RTUs or servers. Simulated RTUs could be connected to different or same SCADA master station. IO signals are indexed and grouped by using index numbers. You can send IO signals from all RTUs to the connected SCADA master stations at once by using index number.
 
+Program features:
+-	Simulation of any number of RTUs simultaneously.
+-	Connect to multiple SCADA systems at once.
+-	Can simulate redundant RTU ports.
+-	Can simulate redundant SCADA system connections.
+-	Easy IO database building by using spreadsheet programs such as MS Excel.
+-	Linux and windows compatible.
+-	Python native graphical user interface (GUI) (no need for third party solutions).
+-	Multithread operation.
+-	Time synchronization through multiple NTP servers.
+-	Detailed logging of all events and signals in comma delimited file format.
+
 I wrote this program when at my company we replaced our legacy ABB SCADA system with new OSI SCADA system, so we wanted to test the new system in comparison with the old legacy system without taking shutdown on the power stations.
 So, by indexing the IO signals in the IOA database files we succeeded to send same IO signals to both of the SCADA systems (old and new) in the same time and compare between them:
 -	IOA address of the signals.
