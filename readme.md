@@ -20,6 +20,8 @@ Program features:
 -	Can simulate redundant RTU ports.
 -	Can simulate redundant SCADA system connections.
 -	Easy IO database building by using spreadsheet programs such as MS Excel.
+-	IP address and network filtration for each RTU independently.
+-	IEC 104 parameters (timing and k) for each RTU independently.
 -	Linux and windows compatible.
 -	Python native graphical user interface (GUI) (no need for third party solutions).
 -	Multithread operation.
