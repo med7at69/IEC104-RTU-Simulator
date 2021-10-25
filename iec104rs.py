@@ -121,6 +121,7 @@ cmdtime=0
 cmdvalue=0
 cmdtype=0
 ioacmdv=0
+cmdrtuno=0
 
 # index program files
 indextime=0
@@ -333,7 +334,7 @@ def initiate(self):
 	self.logfilechanged=1
 
 def readpacket(self):
-	global ioacmdv,cmdtype,cmdvalue,cmdtime,bufsize,pulsemess,regmess,valuemess
+	global ioacmdv,cmdtype,cmdvalue,cmdtime,cmdrtuno,bufsize,pulsemess,regmess,valuemess
 	packet=''
 	# read the packet from buffer
 	if self.rdpointer != self.wrpointer:
@@ -415,6 +416,7 @@ def readpacket(self):
 					cmdvalue=(int(packet[26:26+2],16) & 0x03)
 					cmdtype=1	# sco - cmdtype=${packet:8:2}
 					logmess=dt + ' : SCO without time tag received, IOA=' + ioacmdv + ', Execute set, Pulse=' + pulsemess[pulse:pulse+8] + ', Val=' + valuemess[valuem:valuem+3]
+					cmdrtuno=self.rtuno
 					cmdtime=time()
 				self.logfhw.write(logmess + '\n')
 			elif  packet[8:8+12] == ('2e010600' + self.rtunohex):				# dco command without time tag.
@@ -438,6 +440,7 @@ def readpacket(self):
 					cmdvalue=(int(packet[26:26+2],16) & 0x03)
 					cmdtype=2	# dco - cmdtype=${packet:8:2}
 					logmess=dt + ' : DCO without time tag received, IOA=' + ioacmdv + ', Execute set, Pulse=' + pulsemess[pulse:pulse+8] + ', Val=' + valuemess[valuem:valuem+3]
+					cmdrtuno=self.rtuno
 					cmdtime=time()
 				self.logfhw.write(logmess + '\n')
 			elif  packet[8:8+12] == ('2f010600' + self.rtunohex):				# rco command without time tag.
@@ -461,6 +464,7 @@ def readpacket(self):
 					cmdvalue=(int(packet[26:26+2],16) & 0x03)
 					cmdtype=2	# rco - cmdtype=${packet:8:2}
 					logmess=dt + ' : RCO without time tag received, IOA=' + ioacmdv + ', Execute set, Pulse=' + pulsemess[pulse:pulse+8] + ', Val=' + regmess[valuem:valuem+9]
+					cmdrtuno=self.rtuno
 					cmdtime=time()
 				self.logfhw.write(logmess + '\n')
 			elif  packet[8:8+12] == ('3a010600' + self.rtunohex):				# sco command with time tag.
@@ -487,6 +491,7 @@ def readpacket(self):
 					cmdvalue=(int(packet[26:26+2],16) & 0x03)
 					cmdtype=1	# sco - cmdtype=${packet:8:2}
 					logmess=dt + ' : SCO with time tag received, IOA=' + ioacmdv + ', Execute set, Pulse=' + pulsemess[pulse:pulse+8] + ', Val=' + valuemess[valuem:valuem+3]
+					cmdrtuno=self.rtuno
 					cmdtime=time()
 				self.logfhw.write(logmess + '\n\t\t\t     ' + logtime + '\n')
 			elif  packet[8:8+12] == ('3b010600' + self.rtunohex):				# dco command with time tag.
@@ -513,6 +518,7 @@ def readpacket(self):
 					cmdvalue=(int(packet[26:26+2],16) & 0x03)
 					cmdtype=2	# dco - cmdtype=${packet:8:2}
 					logmess=dt + ' : DCO with time tag received, IOA=' + ioacmdv + ', Execute set, Pulse=' + pulsemess[pulse:pulse+8] + ', Val=' + valuemess[valuem:valuem+3]
+					cmdrtuno=self.rtuno
 					cmdtime=time()
 				self.logfhw.write(logmess + '\n\t\t\t     ' + logtime + '\n')
 			elif  packet[8:8+12] == ('3c010600' + self.rtunohex):				# rco command with time tag.
@@ -539,6 +545,7 @@ def readpacket(self):
 					cmdvalue=(int(packet[26:26+2],16) & 0x03)
 					cmdtype=2	# rco - cmdtype=${packet:8:2}
 					logmess=dt + ' : RCO with time tag received, IOA=' + ioacmdv + ', Execute set, Pulse=' + pulsemess[pulse:pulse+8] + ', Val=' + regmess[valuem:valuem+9]
+					cmdrtuno=self.rtuno
 					cmdtime=time()
 				self.logfhw.write(logmess + '\n\t\t\t     ' + logtime + '\n')
 		self.logfilechanged=1
@@ -855,7 +862,7 @@ def githread (self):
 			self.logfilechanged=1
 
 def cmdthread (self):
-	global ioacmdv,cmdtype,cmdvalue,cmdtime,exitprogram
+	global ioacmdv,cmdtype,cmdvalue,cmdtime,cmdrtuno,exitprogram
 	while True:
 		if exitprogram:
 			break
@@ -864,6 +871,8 @@ def cmdthread (self):
 			self.cmdtype=0
 		if self.cmdtime != cmdtime:
 			self.cmdtime=cmdtime
+			if self.rtuno != cmdrtuno:
+				break
 			cmdioa=ioacmdv
 			self.cmdvalue=cmdvalue
 			self.cmdtype=cmdtype
