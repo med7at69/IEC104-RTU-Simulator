@@ -17,10 +17,22 @@ IEC 104 RTU simulator is a program to simulate the operation of RTU (remote term
 Program features:
 -	Simulation of any number of RTUs simultaneously.
 -	Connect to multiple SCADA systems at once.
--	Can simulate redundant RTU ports.
+-	Can simulate redundant RTU ports. Program will send same IO signal to all RTUs with same RTU number.
 -	Can simulate redundant SCADA system connections.
 -	Easy IO database building by using spreadsheet programs such as MS Excel.
 -	IP address and network filtration for each RTU independently.
+-	Can repeat sending grouped (by index number) of IO signals for any period (in seconds). Also, a delay time in seconds could be applied after sending each IO.
+-	Can send any IO signal based on receiving filter conditions such as specific type ID, IOA, etc.
+-	Accordingly, could be used to simulate any factory acceptance tests (FAT) such as:
+	o	Avalanche test (sending full IO signal list from all defined RTUs by using index 0).
+	o	Worst case (SCADA system emergency case).
+	o	Steady state test (normal operation).
+	o	SCADA system switchover time.
+	o	SCADA system time synchronization.
+	o	Load shedding.
+	o	FLISR (fault location, isolation, and service restoration).
+	o	Self-healing.
+	o	Etc.
 -	IEC 104 parameters (timing and k) for each RTU independently.
 -	Linux and windows compatible.
 -	Python native graphical user interface (GUI) (no need for third party solutions).
@@ -87,27 +99,22 @@ Program operation is based on the following files:
 	
 	c. Any number of RTUs or systems to be simulated by the program.
 	
-2-	IOA database file (for example iodata.csv): It is a comma separated values file format or “.csv” which should be in folder “data”. Folder “Data” should be in the same folder where the program starts in. In the file you can define the IOA signals such that SPI, DPI, NVA, SVA, FLT, SCO, DCO, RCO. Each RTU may have separated IOA data file or multiple RTUs can share the same IOA signals data file. In the IOA database file, IO signals are indexed and grouped by index numbers. You can send IO signals from all RTUs to the connected SCADA master stations at once by using index numbers.
+2-	IOA database file (for example iodata.csv): It is a comma separated values file format or “.csv” which should be in folder “data”. Folder “Data” should be in the same folder where the program starts in. In the file you can define the IOA signals such that SPI, DPI, NVA, SVA, FLT, SCO, DCO, RCO. Each RTU may have separated IOA data file or multiple RTUs can share the same IOA signals data file. In the IOA database file, IO signals are indexed and grouped by index numbers. You can send IO signals from all RTUs to the connected SCADA master stations at once by using index numbers. For monitoring IO (SPI, DPI, AMI) a filter conditions could be added, and program will wait (for time out in ms) to receive filter conditions before sending the IO signal. Also, a delay time in seconds could be applied after sending each IO. Filter conditions will not be used during sending “GI” signals or command reply.
 
 3-	Log files for all RTUs are saved in folder “log”. Folder “log” will be created in the same folder where the program starts in.
 
 When the program starts it will:
-
 1-	Read the program arguments if provided by user.
-
 2-	If initial file is not provided in program arguments, then the program will use the default iec104rs.csv
-
 3-	Read the initial file to get the NTP servers and RTUs as described later.
-
 4-	Each RTU should have name, RTU number, port number to listen on and IOA data file (in "data" folder).
-
 5-	To speed up the loading of RTUs, program will not start any RTU connection until load all RTUs in memory.
-
-6-	If user type index number and press “send” button, then the program will send all IO signals grouped by this index number in all IOA database files of different RTUs to the connected master stations. This function is helpful specially when you want to compare between two SCADA master stations, for example one new and the other is the legacy working system.
-
-7-	The simulator will not send “Testfr act” but it will wait until receiving “testfr act” from the connected SCADA system and will reply by “testfr con” and log the test frame period in the RTU log file.
-
-8-	If idle time (configured in the initial file for each RTU in seconds) passed without send/receive data then the program simulator will disconnect the connection to restart working connection again.
+6-	If user type index number and press “send” button, then the program will send all IO signals grouped by this index number for typed time duration in seconds in all IOA database files of different RTUs to the connected master stations. This function is helpful especially when you want to compare between two SCADA master stations, for example one new and the other is the legacy working system.
+7-	If index typed is “0” then program will send all IOA to all connected RTUs for the typed time duration at once.
+8-	If any monitoring IO (SPI, DPI, AMI) in the IOA database csv file has filter conditions defined then the program will wait (for time out in ms) to receive filter conditions before sending the IO signal. Also, if a delay time in seconds is defined then it will be applied after sending each IO.
+9-	Filter conditions will not be used during sending “GI” signals or command reply.
+10-	The simulator will not send “Testfr act” but it will wait until receiving “testfr act” from the connected SCADA system and will reply by “testfr con” and log the test frame period in the RTU log file.
+11-	If idle time (configured in the initial file for each RTU in seconds) passed without send/receive data, then the program simulator will disconnect the connection to restart working connection again.
 
 ===========================================================================
 
@@ -148,7 +155,7 @@ General notes:
 -	IOA signal database file should define the following parameters for each signal row:
 	o Index number:
 		 This index will be used to submit the signals from the file to the SCADA connected system.
-		 Multiple signals could be grouped by same “index” number to submitted together when the specified index number given to the iec104rs program.
+		 Multiple signals could be grouped by same “index” number to submitted together when the specified index number given to the iec104rs program. Typing index “0” in program GUI will send all IOA to all connected RTUs for the typed time duration at once.
 		 If first character of this column in any row is “!” Then program will stop sending general interrogation “GI” signals and cancel the rest of the rows.
 	o GI: If this field contains “Y” then the specified signal will be submitted during general interrogation to the connected SCADA system.
 	o Type ID: IEC 104 type ID of the signal in numeric value. All supported values are mentioned in the provided sample IOA database files:
@@ -172,6 +179,13 @@ General notes:
 		 Only “CP56Time2a “ time tag is used.
 	o IOA address: Signal object address.
 	o Signal value: For command, the value should contain the status (SPI, DPI, or AMI) IOA address to be submitted as a response to the connected SCADA system when receiving the command. This way, full command simulation could be achieved.
+	o Wait (sec): delay time in seconds to be added after sending each IOA signal.
+	o Filter conditions: Program will wait to receive the defined filter conditions before sending the IOA signal. If any filter is empty, then it will not be used. For example, if “rtu” entry is empty then IOA signal will be submitted regardless of the RTU number. Filter conditions will not be used during sending “GI” signals or command reply.
+		 RTU number: In case same IO database csv file is used for multiple RTUs then this field could be used to send the IO signal for specific RTU number only.
+		 Type ID: received telegram should have this specific type-ID.
+		 IOA: received telegram should have this specific type-ID.
+		 Value: received telegram should have this specific signal “value”.
+		 Time out (ms): program will wait for “time out” in milliseconds to receive the filter conditions(s).
 	o Comment: Sequential columns (maximum 53 characters) could be used to represent signal and feeder names or any other comments to be written in the RTU log file.
 
 ===========================================================================
@@ -192,6 +206,7 @@ Some IO signals not submitted during general interrogation or during index sendi
 -	If the “GI” field is not equal “Y” then the signal will not be submitted during GI.
 -	If signal “type ID” field is not in the supported type IDs then it will not be submitted.
 -	If signal value is not valid then it will not be submitted.
+-	If filter conditions(s) is not received before the time out period, then signal will not submitted during index send operation.
 
 Local time not updated although NTP servers configured, and it is tested normally.
 -	Updating local time required admin/root privilege under both Windows and Linux so please be sure to start the application with admin/root privilege so it can update the local time normally.
@@ -249,48 +264,66 @@ ntp_update_every_sec,900,,,,,,
 
 IOA data (iodata.csv) example with explanations
 
-#" IOA data file in comma separated values (.csv). Should be in folder ""data"" under main folder of the program iec104rs",,,,,,
-# If first character of first column in any row is ! Then GI will cancel rest of the rows.,,,,,,,
-# Supported types:,,,,,,
-#,"SPI (1,30)",OFF = 0,ON = 1,,,
-#,"DPI(3,31)",OFF = 01,ON = 02,XX = 00/11,,
-#,"NVA(9,34)","Example, if you want to send 11Kv then value=(11000/max. value) = (11000/13200) = 0.83",,,,
-#,"SVA(11,35)","Example, if you want to send 11Kv then value = 11",,,,
-#,"FLT(13,36)","Example, if you want to send 11.23Kv then value = 11.23",,,,
-#,"SCO(45,58) - value should equal the IOA of its status.",,,,,
-#,"DCO(46,59) - value should equal the IOA of its status.",,,,,
-#,"RCO(47,60) - value should equal the IOA of its status.",,,,,
-#,,,,,,
-#,GI,typeid,IOA,Value,Comment,
-#,--,------,---,-----,-----,
-#------------------------,,SCO command ------------------------------,,,,
-#,,,,,,
-#------------------------,,DCO command + status --------------------,,,,
-100000,N,46,21001,301,dummy (DCO),dummy (DCO)
-100001,N,31,301,1,dummy (dpi),dummy (dpi)
-100002,N,46,21035,343,KLN01-Q0 (DCO),KLN01-Q0 (DCO)
-100003,N,47,21007,15001,TX-(RCO),TX-(RCO)
-100004,N,46,21039,355,KLN03-Q0 (DCO),KLN03-Q0 (DCO)
-100005,N,46,21041,361,KLN05-Q0 (DCO),KLN05-Q0 (DCO)
-100006,N,46,21043,367,KLN07-Q0 (DCO),KLN07-Q0 (DCO)
-100007,N,46,21017,307,TH01-Q0 (DCO),TH01-Q0 (DCO)
-100008,N,46,21045,377,TL01-Q1 (DCO),TL01-Q1 (DCO)
-#------------------------,,SCO command with time tag --------------,,,,
-#, , , , , , 
-#------------------------,,DCO command with time tag ---------------,,,,
-#, , , , , , 
-#------------------------,,DPI ------------------------------,,,,
-301,Y,31,301,1,DUMP,DUMP
-301,Y,31,303,1,spare,spare
-301,Y,31,305,1,H-TH01BAY CTRL,H-TH01BAY CTRL
-301,Y,31,307,1,H-TH01Q0,H-TH01Q0
-301,Y,31,309,1,H-TH01Q1,H-TH01Q1
-301,Y,31,311,1,H-TH01Q4,H-TH01Q4
-301,Y,31,313,1,H-LN01BAY CTRL,H-LN01BAY CTRL
-#!Eng GI,N,31,,,,
-301,Y,31,315,1,H-LN01Q0,H-LN01Q0
-317,Y,31,317,2,H-LN01Q1,H-LN01Q1
-319,Y,31,319,2,H-LN01Q3,H-LN01Q3
+"#"" IOA data file in comma separated values (.csv). Should be in folder """"data"""" under main folder where the program starts in""",,,,,,,,,,,,
+# If first character of first column in any row is ! Then GI will cancel rest of the rows.,,,,,,,,,,,,
+# Supported types:,,,,,,,,,,,,
+#,"SPI (1,30)",OFF = 0,ON = 1,,,,,,,,,
+#,"DPI(3,31)",OFF = 01,ON = 02,XX = 00/11,,,,,,,,
+#,"NVA(9,34)","Example, if you want to send 11Kv then value=(11000/max. value) = (11000/13200) = 0.83",,,,,,,,,,
+#,"SVA(11,35)","Example, if you want to send 11Kv then value = 11",,,,,,,,,,
+#,"FLT(13,36)","Example, if you want to send 11.23Kv then value = 11.23",,,,,,,,,,
+#,"SCO(45,58) - value should equal the IOA of its status.",,,,,,,,,,,
+#,"DCO(46,59) - value should equal the IOA of its status.",,,,,,,,,,,
+#,"RCO(47,60) - value should equal the IOA of its status.",,,,,,,,,,,
+#,,,,,,,,,,,,
+#send index entry from rtu if filter conditions received by connected master before timeout=T-out in ms.,,,,,,,,,,,,
+#empty filter entry will not be used for filtering. Example: if rtuno is empty then index entry will be sent regardless the rtuno,,,,,,,,,,,,
+#filters are not used during sending GI entries or during replying to commands.,,,,,,,,,,,,
+#,,,,,,filter -------------------------------- conditions,,,,,,
+#,,,,,,if,and if,and if,and if,filter,,
+#index,GI,typeid,IOA,Value,wait sec,rtu no,type id,ioa,value,T-out(ms),Comment,
+#,--,------,---,-----,-----------,-----------,-----------,-----------,-----------,-----------,-----------,
+#------------------------,,SCO command ------------------------------,,,,,,,,,,
+#,,,,,,,,,,,,
+#------------------------,,DCO command + status --------------------,,,,,,,,,,
+100000,N,46,21001,301,0,,,,,,dummy (DCO),dummy (DCO)
+100001,N,31,301,1,0,,,,,,dummy (dpi),dummy (dpi)
+100002,N,46,21035,343,0,,,,,,KLN01-Q0 (DCO),KLN01-Q0 (DCO)
+100003,N,47,21007,15001,0,,,,,,TX-(RCO),TX-(RCO)
+100004,N,46,21039,355,0,,,,,,KLN03-Q0 (DCO),KLN03-Q0 (DCO)
+100005,N,46,21041,361,0,,,,,,KLN05-Q0 (DCO),KLN05-Q0 (DCO)
+100006,N,46,21043,367,0,,,,,,KLN07-Q0 (DCO),KLN07-Q0 (DCO)
+100007,N,46,21017,307,0,,,,,,TH01-Q0 (DCO),TH01-Q0 (DCO)
+100008,N,46,21045,377,0,,,,,,TL01-Q1 (DCO),TL01-Q1 (DCO)
+#------------------------,,SCO command with time tag --------------,,,,,,,,,,
+#, , , , ,,,,,,, , 
+#------------------------,,DCO command with time tag ---------------,,,,,,,,,,
+#, , , , ,,,,,,, , 
+#------------------------,,DPI ------------------------------,,,,,,,,,,
+301,Y,31,301,1,0,,,,,,DUMP,DUMP
+301,Y,31,303,1,0,,,,,,spare,spare
+301,Y,31,305,1,0,,,,,,H-TH01BAY CTRL,H-TH01BAY CTRL
+301,Y,31,307,1,0,,,,,,H-TH01Q0,H-TH01Q0
+301,Y,31,309,1,0,,,,,,H-TH01Q1,H-TH01Q1
+301,Y,31,311,1,0,,,,,,H-TH01Q4,H-TH01Q4
+301,Y,31,313,1,0,,,,,,H-LN01BAY CTRL,H-LN01BAY CTRL
+#!End GI,N,31,314,1,0,,,,,,,
+301,Y,31,315,1,0,,,,,,H-LN01Q0,H-LN01Q0
+317,Y,31,317,2,0,,46,21001,2,5000,H-LN01Q1,H-LN01Q1
+317,Y,31,319,2,0,,,,,,H-LN01Q3,H-LN01Q3
+321,Y,31,321,2,0,,,,,,K-C2  CAP CTRL,K-C2  CAP CTRL
+323,Y,31,323,2,0,,,,,,K-C2  CAP MODE,K-C2  CAP MODE
+#-------------------------,,SPI ----------------------------------------,,,,,,,,,,
+445,Y,30,445,0,0,,,,,,110V DC FAULT,110V DC FAULT
+446,Y,30,446,0,0,,,,,,30V DC FAULT,30V DC FAULT
+447,Y,30,447,0,0,,,,,,48V DC BAT CIRC FAULT,48V DC BAT CIRC FAULT
+#------------------------,,Normalized meas. + CP56Time2a  -------------,,,,,,,,,,
+64,N,34,11002,-0.4,0,,,,,,W,W
+65,N,34,11002,0.6,0,,,,,,W,W
+66,N,34,11003,0.5,0,,,,,,VAR,VAR
+#------------------------,,Short floating point measurements  -------------,,,,,,,,,,
+88,N,13,11002,-10.456,0,,,,,,W,W
+89,Y,13,11002,5.435,0,,,,,,W,W
 
 ===========================================================================
 
