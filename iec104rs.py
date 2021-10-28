@@ -844,9 +844,9 @@ def indexthread (self):
 						if (row[0] == ioindex or int(ioindex) == 0) and int(row[2]) in types:
 							indexfound=1
 							# check filter and wait to receive it.
-							if not row[5]:		# if delay is empty then put it as zero seconds.
+							if not row[5].isdigit():		# if delay is empty then put it as zero seconds.
 								row[5] = '0'
-							if not row[10]:		# if filter timeout is empty then put it as zero ms.
+							if not row[10].isdigit():		# if filter timeout is empty then put it as zero ms.
 								row[10] = '0'
 							self.filtertypid=row[7]
 							self.filterioa=row[8]
