@@ -104,16 +104,27 @@ Program operation is based on the following files:
 3-	Log files for all RTUs are saved in folder “log”. Folder “log” will be created in the same folder where the program starts in.
 
 When the program starts it will:
+
 1-	Read the program arguments if provided by user.
+
 2-	If initial file is not provided in program arguments, then the program will use the default iec104rs.csv
+
 3-	Read the initial file to get the NTP servers and RTUs as described later.
+
 4-	Each RTU should have name, RTU number, port number to listen on and IOA data file (in "data" folder).
+
 5-	To speed up the loading of RTUs, program will not start any RTU connection until load all RTUs in memory.
+
 6-	If user type index number and press “send” button, then the program will send all IO signals grouped by this index number for typed time duration in seconds in all IOA database files of different RTUs to the connected master stations. This function is helpful especially when you want to compare between two SCADA master stations, for example one new and the other is the legacy working system.
+
 7-	If index typed is “0” then program will send all IOA to all connected RTUs for the typed time duration at once.
+
 8-	If any monitoring IO (SPI, DPI, AMI) in the IOA database csv file has filter conditions defined then the program will wait (for time out in ms) to receive filter conditions before sending the IO signal. Also, if a delay time in seconds is defined then it will be applied after sending each IO.
+
 9-	Filter conditions will not be used during sending “GI” signals or command reply.
+
 10-	The simulator will not send “Testfr act” but it will wait until receiving “testfr act” from the connected SCADA system and will reply by “testfr con” and log the test frame period in the RTU log file.
+
 11-	If idle time (configured in the initial file for each RTU in seconds) passed without send/receive data, then the program simulator will disconnect the connection to restart working connection again.
 
 ===========================================================================
