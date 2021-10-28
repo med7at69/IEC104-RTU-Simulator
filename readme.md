@@ -138,19 +138,33 @@ General notes:
 -	Initial file should be in the same folder where the program starts in.
 -	If first character of first column in any row is “!” Then program will stop reading the initial file and cancel the rest of the rows.
 -	Initial file will start by defining the following parameters:
+-	
 	o “ntp_server”: it could be repeated in multiple rows for multiple NTP servers. If program has admin/root privilege then it will try all the servers one by one to synchronize the local time.
+	
 	o “ntp_update_every_sec”: seconds to periodically update local time. If not provided, then the default is 900 seconds.
+	
 -	Then initial file should contain all RTUs information one by one (each row contains one complete RTU information) such that each RTU is define the following parameters in separated rows:
+-	
 	o ID:
+	
 		 Better to be a unique sequential number for each RTU.
+		
 		 If “id” field is not number, then it will be considered as comment and will be neglected by the program.
+		
 		 If first character of “id” column in any row is “!” Then program will stop reading the rest of the initial file and will cancel the rest of the rows.
+		
 	o System/RTU name: Name with maximum of 16 characters length.
+	
 	o RTU number: RTU number (1-65535). RTU number is not unique and multiple RTUs can have the same RTU number. If multiple RTUs have the same RTU number, then it is supposed to be connected to different SCADA systems or IEC 104 clients.
+	
 	o Port number: Unique port number (1-65535). Program will listen to this port to accept connection for the specified RTU.
+	
 	o Accept hosts/network list: Accepted hosts or networks filters separated by “;”. example: 192.168.1.0/24;10.10.1.2".
+	
 	o IEC 104 “k”: IEC 104 “k” constant which represent maximum number of packets could be transmitted without receiving acknowledge from the receiver. If not provided, then default value is “12” packets.
+	
 	o Idle time: Idle time in seconds before disconnecting RTU connection. Default is “60” seconds.
+	
 	o IOA signal database file: File contains the IOA signals for the specified RTU in comma separated values format (csv). Multiple RTU can share same IOA data file.
 
 ===========================================================================
