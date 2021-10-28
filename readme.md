@@ -178,39 +178,73 @@ General notes:
 -	All IOA database files should be in folder “data”. Folder “data” should be in the same folder where the program starts in.
 -	If first character of first column in any row is “!” Then program will stop sending general interrogation “GI” signals and cancel the rest of the rows.
 -	IOA signal database file should define the following parameters for each signal row:
+-	
 	o Index number:
+	
 		 This index will be used to submit the signals from the file to the SCADA connected system.
+		
 		 Multiple signals could be grouped by same “index” number to submitted together when the specified index number given to the iec104rs program. Typing index “0” in program GUI will send all IOA to all connected RTUs for the typed time duration at once.
+		
 		 If first character of this column in any row is “!” Then program will stop sending general interrogation “GI” signals and cancel the rest of the rows.
+		
 	o GI: If this field contains “Y” then the specified signal will be submitted during general interrogation to the connected SCADA system.
+	
 	o Type ID: IEC 104 type ID of the signal in numeric value. All supported values are mentioned in the provided sample IOA database files:
+	
 		 SPI (single point indication) without time tag: 1
+		
 		 SPI (single point indication) with time tag: 30
+		
 		 DPI (double point indication) without time tag: 3
+		
 		 DPI (double point indication) with time tag: 31
+		
 		 NVA (normalized meas.) without time tag: 9
+		
 		 NVA (normalized meas.) with time tag: 34
+		
 		 SVA (Scaled meas.) without time tag: 11
+		
 		 SVA (Scaled meas.) with time tag: 35
+		
 		 FLT (Float meas.) without time tag: 13
+		
 		 FLT (Float meas.) with time tag: 36
+		
 		 SCO (single command) without time tag: 45
+		
 		 SCO (single command) without time tag: 45
+		
 		 SCO (single command) with time tag: 58
+		
 		 DCO (double command) without time tag: 46
+		
 		 DCO (double command) with time tag: 59
+		
 		 RCO (regulation command) without time tag: 47
+		
 		 DCO (regulation command) with time tag: 60
+		
 		 Only “CP56Time2a “ time tag is used.
+		
 	o IOA address: Signal object address.
+	
 	o Signal value: For command, the value should contain the status (SPI, DPI, or AMI) IOA address to be submitted as a response to the connected SCADA system when receiving the command. This way, full command simulation could be achieved.
+	
 	o Wait (sec): delay time in seconds to be added after sending each IOA signal.
+	
 	o Filter conditions: Program will wait to receive the defined filter conditions before sending the IOA signal. If any filter is empty, then it will not be used. For example, if “rtu” entry is empty then IOA signal will be submitted regardless of the RTU number. Filter conditions will not be used during sending “GI” signals or command reply.
+	
 		 RTU number: In case same IO database csv file is used for multiple RTUs then this field could be used to send the IO signal for specific RTU number only.
+		
 		 Type ID: received telegram should have this specific type-ID.
+		
 		 IOA: received telegram should have this specific type-ID.
+		
 		 Value: received telegram should have this specific signal “value”.
+		
 		 Time out (ms): program will wait for “time out” in milliseconds to receive the filter conditions(s).
+		
 	o Comment: Sequential columns (maximum 53 characters) could be used to represent signal and feeder names or any other comments to be written in the RTU log file.
 
 ===========================================================================
