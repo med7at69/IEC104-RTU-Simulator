@@ -24,14 +24,23 @@ Program features:
 -	Can repeat sending grouped (by index number) of IO signals for any period (in seconds). Also, a delay time in seconds could be applied after sending each IO.
 -	Can send any IO signal based on receiving filter conditions such as specific type ID, IOA, etc.
 -	Accordingly, could be used to simulate any factory acceptance tests (FAT) such as:
+-	
 	o	Avalanche test (sending full IO signal list from all defined RTUs by using index 0).
+	
 	o	Worst case (SCADA system emergency case).
+	
 	o	Steady state test (normal operation).
+	
 	o	SCADA system switchover time.
+	
 	o	SCADA system time synchronization.
+	
 	o	Load shedding.
+	
 	o	FLISR (fault location, isolation, and service restoration).
+	
 	o	Self-healing.
+	
 	o	Etc.
 -	IEC 104 parameters (timing and k) for each RTU independently.
 -	Linux and windows compatible.
