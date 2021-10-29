@@ -382,12 +382,16 @@ def readpacket(self):
 		# check if it is I format (bit 0=0 of 3rd byte or 4 and 5 digits of databuffer) then increase RX
 		if (seqnotxlsb & 1) == 0:
 			incseqno(self,'RX')
+			# check if required to check filter on same type id and same ioa and same value
+			if len(packet) >= 28:
+				ioacmd=bytearray.fromhex(packet[20:20+6])
+				if self.checkfilter and ((not self.filtertypid.isdigit()) or int(self.filtertypid) == int(packet[8:8+2],16)) and ((not self.filterioa.isdigit()) or (self.filterioa == str(int.from_bytes(ioacmd,'little')))) and ((not self.filtervalue.isdigit()) or (int(self.filtervalue) == int(packet[26:26+2],16) & 0x03)):
+					self.checkfilter=''
 			# decode I format packets
 			if packet[8:8+12] == ('64010600' + self.rtunohex) or packet[8:8+12] == '64010600ffff':		# GI act packet
 				# check if required to check filter on type id GI
 				if self.checkfilter and self.filtertypid == '100':
 					self.checkfilter=''
-					self.filterreceived=1
 				sendpacket=b'\x68\x0E\x00\x00\x00\x00\x64\x01\x07\x00' + int(self.rtuno).to_bytes(2,'little') + b'\x00\x00\x00\x14'
 				senddata(self,sendpacket)
 				self.logfhw.write(dt + ' : GI received.' + '\n')
@@ -399,18 +403,12 @@ def readpacket(self):
 				# check if required to check filter on type id time sync
 				if self.checkfilter and self.filtertypid == '103':
 					self.checkfilter=''
-					self.filterreceived=1
 				sendpacket=b'\x68\x14\x00\x00\x00\x00\x67\x01\x07\x00' + int(self.rtuno).to_bytes(2,'little') + b'\x00\x00\x00'
 				senddata(self,sendpacket,addtime=1)
 				ts=((int(packet[32:32+2],16) & 0x80)>>7)*3
 				ms=packet[28:28+2] + packet[26:26+2]
 				self.logfhw.write(dt + ' : Time sync. received with date (dd-mm-yy): ' + "{:02d}".format(int(packet[34:34+2],16)&0x1f) + '-' + "{:02d}".format(int(packet[36:36+2],16)&0x0f) + '-' + "{:02d}".format(int(packet[38:38+2],16)&0x7f) + ',\n\t\t\t     time (HH:MM:SS.ms): ' + "{:02d}".format(int(packet[32:32+2],16)&0x1f) + ':' + "{:02d}".format(int(packet[30:30+2],16)&0x3f) + ':' + "{:09.6f}".format(float(int(ms,16))/1000) + ', Time saving ' + valuemess[ts:ts+3] + '\n')
 			elif  packet[8:8+12] == ('2d010600' + self.rtunohex):				# sco command without time tag.
-				# check if required to check filter on same type id and same ioa and same value
-				ioacmd=bytearray.fromhex(packet[20:20+6])
-				if self.checkfilter and (int(self.filtertypid) == int(packet[8:8+2],16)) and ((not self.filterioa) or (self.filterioa == str(int.from_bytes(ioacmd,'little')))) and ((not self.filtervalue) or (int(self.filtervalue) == int(packet[26:26+2],16) & 0x03)):
-					self.checkfilter=''
-					self.filterreceived=1
 				pulse=((int(packet[26:26+2],16) & 0x7c)>>2)*8
 				valuem=(int(packet[26:26+2],16) & 0x03)*3
 				# if select? then acknowledge only otherwise ack and term then prepare for sending back the status
@@ -434,11 +432,6 @@ def readpacket(self):
 					cmdtime=time()
 				self.logfhw.write(logmess + '\n')
 			elif  packet[8:8+12] == ('2e010600' + self.rtunohex):				# dco command without time tag.
-				# check if required to check filter on same type id and same ioa and same value
-				ioacmd=bytearray.fromhex(packet[20:20+6])
-				if self.checkfilter and (int(self.filtertypid) == int(packet[8:8+2],16)) and ((not self.filterioa) or (self.filterioa == str(int.from_bytes(ioacmd,'little')))) and ((not self.filtervalue) or (int(self.filtervalue) == int(packet[26:26+2],16) & 0x03)):
-					self.checkfilter=''
-					self.filterreceived=1
 				pulse=((int(packet[26:26+2],16) & 0x7c)>>2)*8
 				valuem=((int(packet[26:26+2],16) & 0x03)-1)*3
 				# if select? then acknowledge only otherwise ack and term then prepare for sending back the status
@@ -462,11 +455,6 @@ def readpacket(self):
 					cmdtime=time()
 				self.logfhw.write(logmess + '\n')
 			elif  packet[8:8+12] == ('2f010600' + self.rtunohex):				# rco command without time tag.
-				# check if required to check filter on same type id and same ioa and same value
-				ioacmd=bytearray.fromhex(packet[20:20+6])
-				if self.checkfilter and (int(self.filtertypid) == int(packet[8:8+2],16)) and ((not self.filterioa) or (self.filterioa == str(int.from_bytes(ioacmd,'little')))) and ((not self.filtervalue) or (int(self.filtervalue) == int(packet[26:26+2],16) & 0x03)):
-					self.checkfilter=''
-					self.filterreceived=1
 				pulse=((int(packet[26:26+2],16) & 0x7c)>>2)*8
 				valuem=((int(packet[26:26+2],16) & 0x03)-1)*9
 				# if select? then acknowledge only otherwise ack and term then prepare for sending back the status
@@ -490,11 +478,6 @@ def readpacket(self):
 					cmdtime=time()
 				self.logfhw.write(logmess + '\n')
 			elif  packet[8:8+12] == ('3a010600' + self.rtunohex):				# sco command with time tag.
-				# check if required to check filter on same type id and same ioa and same value
-				ioacmd=bytearray.fromhex(packet[20:20+6])
-				if self.checkfilter and (int(self.filtertypid) == int(packet[8:8+2],16)) and ((not self.filterioa) or (self.filterioa == str(int.from_bytes(ioacmd,'little')))) and ((not self.filtervalue) or (int(self.filtervalue) == int(packet[26:26+2],16) & 0x03)):
-					self.checkfilter=''
-					self.filterreceived=1
 				pulse=((int(packet[26:26+2],16) & 0x7c)>>2)*8
 				valuem=(int(packet[26:26+2],16) & 0x03)*3
 				ts=((int(packet[34:34+2],16) & 0x80)>>7)*3
@@ -521,11 +504,6 @@ def readpacket(self):
 					cmdtime=time()
 				self.logfhw.write(logmess + '\n\t\t\t     ' + logtime + '\n')
 			elif  packet[8:8+12] == ('3b010600' + self.rtunohex):				# dco command with time tag.
-				# check if required to check filter on same type id and same ioa and same value
-				ioacmd=bytearray.fromhex(packet[20:20+6])
-				if self.checkfilter and (int(self.filtertypid) == int(packet[8:8+2],16)) and ((not self.filterioa) or (self.filterioa == str(int.from_bytes(ioacmd,'little')))) and ((not self.filtervalue) or (int(self.filtervalue) == int(packet[26:26+2],16) & 0x03)):
-					self.checkfilter=''
-					self.filterreceived=1
 				pulse=((int(packet[26:26+2],16) & 0x7c)>>2)*8
 				valuem=((int(packet[26:26+2],16) & 0x03)-1)*3
 				ts=((int(packet[34:34+2],16) & 0x80)>>7)*3
@@ -552,11 +530,6 @@ def readpacket(self):
 					cmdtime=time()
 				self.logfhw.write(logmess + '\n\t\t\t     ' + logtime + '\n')
 			elif  packet[8:8+12] == ('3c010600' + self.rtunohex):				# rco command with time tag.
-				# check if required to check filter on same type id and same ioa and same value
-				ioacmd=bytearray.fromhex(packet[20:20+6])
-				if self.checkfilter and (int(self.filtertypid) == int(packet[8:8+2],16)) and ((not self.filterioa) or (self.filterioa == str(int.from_bytes(ioacmd,'little')))) and ((not self.filtervalue) or (int(self.filtervalue) == int(packet[26:26+2],16) & 0x03)):
-					self.checkfilter=''
-					self.filterreceived=1
 				pulse=((int(packet[26:26+2],16) & 0x7c)>>2)*8
 				valuem=((int(packet[26:26+2],16) & 0x03)-1)*9
 				ts=((int(packet[34:34+2],16) & 0x80)>>7)*3
@@ -839,7 +812,7 @@ def indexthread (self):
 					for row in csv_reader:
 						if not self.dataactive:
 							break
-						if not row[0].isdigit() or not row[2].isdigit() or not row[3].isdigit() or not row[4] or (row[6] and row[6] != self.rtuno):
+						if not row[0].isdigit() or not row[2].isdigit() or not row[3].isdigit() or not row[4] or (row[6].isdigit() and row[6] != self.rtuno):
 							continue
 						if (row[0] == ioindex or int(ioindex) == 0) and int(row[2]) in types:
 							indexfound=1
@@ -851,13 +824,12 @@ def indexthread (self):
 							self.filtertypid=row[7]
 							self.filterioa=row[8]
 							self.filtervalue=row[9]
-							self.filterreceived=0
 							self.checkfilter = row[7] or row[8] or row[9]
 							filtertimeout=time()
-							while self.checkfilter and (not self.filterreceived) and ((time() - filtertimeout)*1000 < float(row[10])):
+							while self.checkfilter and ((time() - filtertimeout)*1000 < float(row[10])):
 								if stopsendindex:
 									break
-							if (not self.checkfilter) or self.filterreceived:
+							if (not self.checkfilter):
 								for l in range(11,len(row)):
 									row[10] += ' ' + row[l]
 								sendtelegramind(self,row)
@@ -1084,7 +1056,6 @@ class iec104thread (threading.Thread):
 		self.filterioa=0
 		self.filtervalue=0
 		self.checkfilter=''
-		self.filterreceived=0
 		
 		# py will write this variable when connection disconnected.
 		self.disconnected=0
