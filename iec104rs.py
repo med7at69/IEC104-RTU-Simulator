@@ -382,47 +382,50 @@ def readpacket(self):
 		# check if it is I format (bit 0=0 of 3rd byte or 4 and 5 digits of databuffer) then increase RX
 		if (seqnotxlsb & 1) == 0:
 			incseqno(self,'RX')
+			self.org = packet[14:14+2]		# get org. address
 			# check if required to check filter on same type id and same ioa and same value
 			if len(packet) >= 28:
 				ioacmd=bytearray.fromhex(packet[20:20+6])
 				if self.checkfilter and ((not self.filtertypid.isdigit()) or int(self.filtertypid) == int(packet[8:8+2],16)) and ((not self.filterioa.isdigit()) or (self.filterioa == str(int.from_bytes(ioacmd,'little')))) and ((not self.filtervalue.isdigit()) or (int(self.filtervalue) == int(packet[26:26+2],16) & 0x03)):
 					self.checkfilter=''
 			# decode I format packets
-			if packet[8:8+12] == ('64010600' + self.rtunohex) or packet[8:8+12] == '64010600ffff':		# GI act packet
+			if packet[8:8+2] == '64' and (packet[16:16+4] == self.rtunohex or packet[16:16+4] == 'ffff'):		# GI act packet
 				# check if required to check filter on type id GI
 				if self.checkfilter and self.filtertypid == '100':
 					self.checkfilter=''
-				sendpacket=b'\x68\x0E\x00\x00\x00\x00\x64\x01\x07\x00' + int(self.rtuno).to_bytes(2,'little') + b'\x00\x00\x00\x14'
+				sendpacket=b'\x68\x0E\x00\x00\x00\x00\x64\x01\x07' + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + b'\x00\x00\x00\x14'
 				senddata(self,sendpacket)
 				self.logfhw.write(dt + ' : GI received.' + '\n')
 				f=open(self.logfilenamegi,"a")
 				f.write(dt + ' : GI received.' + '\n')
 				f.close()
 				self.sendgi=1
-			elif  packet[8:8+12] == ('67010600' + self.rtunohex) or packet[8:8+12] == '67010600ffff':		# Time sync act packet
+			elif packet[8:8+2] == '67' and (packet[16:16+4] == self.rtunohex or packet[16:16+4] == 'ffff'):	# Time sync act packet
+			#elif  packet[8:8+12] == ('67010600' + self.rtunohex) or packet[8:8+12] == '67010600ffff':		# Time sync act packet
 				# check if required to check filter on type id time sync
 				if self.checkfilter and self.filtertypid == '103':
 					self.checkfilter=''
-				sendpacket=b'\x68\x14\x00\x00\x00\x00\x67\x01\x07\x00' + int(self.rtuno).to_bytes(2,'little') + b'\x00\x00\x00'
+				sendpacket=b'\x68\x14\x00\x00\x00\x00\x67\x01\x07' + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + b'\x00\x00\x00'
 				senddata(self,sendpacket,addtime=1)
 				ts=((int(packet[32:32+2],16) & 0x80)>>7)*3
 				ms=packet[28:28+2] + packet[26:26+2]
 				self.logfhw.write(dt + ' : Time sync. received with date (dd-mm-yy): ' + "{:02d}".format(int(packet[34:34+2],16)&0x1f) + '-' + "{:02d}".format(int(packet[36:36+2],16)&0x0f) + '-' + "{:02d}".format(int(packet[38:38+2],16)&0x7f) + ',\n\t\t\t     time (HH:MM:SS.ms): ' + "{:02d}".format(int(packet[32:32+2],16)&0x1f) + ':' + "{:02d}".format(int(packet[30:30+2],16)&0x3f) + ':' + "{:09.6f}".format(float(int(ms,16))/1000) + ', Time saving ' + valuemess[ts:ts+3] + '\n')
-			elif  packet[8:8+12] == ('2d010600' + self.rtunohex):				# sco command without time tag.
+			elif packet[8:8+2] == '2d' and packet[16:16+4] == self.rtunohex:	# Time sync act packet
+			#elif  packet[8:8+12] == ('2d010600' + self.rtunohex):				# sco command without time tag.
 				pulse=((int(packet[26:26+2],16) & 0x7c)>>2)*8
 				valuem=(int(packet[26:26+2],16) & 0x03)*3
 				# if select? then acknowledge only otherwise ack and term then prepare for sending back the status
 				if (int(packet[26:26+2],16) & 0x80) != 0:	# check select bit 1000 0000
 					# send cmd ack
-					sendpacket=b'\x68\x0e\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x07\x00' + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
+					sendpacket=b'\x68\x0e\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x07' + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
 					senddata(self,sendpacket)
 					logmess=dt + ' : SCO without time tag received, IOA=' + str(int.from_bytes(ioacmd,'little')) + ', Select set, Pulse=' + pulsemess[pulse:pulse+8] + ', Val=' + valuemess[valuem:valuem+3]
 				else:
 					# send actconf.
-					sendpacket=b'\x68\x0e\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x07\x00' + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
+					sendpacket=b'\x68\x0e\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x07' + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
 					senddata(self,sendpacket)
 					# send actterm.
-					sendpacket=b'\x68\x0e\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x0a\x00' + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
+					sendpacket=b'\x68\x0e\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x0a' + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
 					senddata(self,sendpacket)
 					ioacmdv=str(int.from_bytes(ioacmd,'little'))
 					cmdvalue=(int(packet[26:26+2],16) & 0x03)
@@ -437,15 +440,15 @@ def readpacket(self):
 				# if select? then acknowledge only otherwise ack and term then prepare for sending back the status
 				if (int(packet[26:26+2],16) & 0x80) != 0:	# check select bit 1000 0000
 					# send cmd ack
-					sendpacket=b'\x68\x0e\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x07\x00' + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
+					sendpacket=b'\x68\x0e\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x07' + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
 					senddata(self,sendpacket)
 					logmess=dt + ' : DCO without time tag received, IOA=' + str(int.from_bytes(ioacmd,'little')) + ', Select set, Pulse=' + pulsemess[pulse:pulse+8] + ', Val=' + valuemess[valuem:valuem+3]
 				else:
 					# send actconf.
-					sendpacket=b'\x68\x0e\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x07\x00' + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
+					sendpacket=b'\x68\x0e\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x07' + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
 					senddata(self,sendpacket)
 					# send actterm.
-					sendpacket=b'\x68\x0e\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x0a\x00' + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
+					sendpacket=b'\x68\x0e\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x0a' + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
 					senddata(self,sendpacket)
 					ioacmdv=str(int.from_bytes(ioacmd,'little'))
 					cmdvalue=(int(packet[26:26+2],16) & 0x03)
@@ -460,15 +463,15 @@ def readpacket(self):
 				# if select? then acknowledge only otherwise ack and term then prepare for sending back the status
 				if (int(packet[26:26+2],16) & 0x80) != 0:	# check select bit 1000 0000
 					# send cmd ack
-					sendpacket=b'\x68\x0e\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x07\x00' + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
+					sendpacket=b'\x68\x0e\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x07' + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
 					senddata(self,sendpacket)
 					logmess=dt + ' : RCO without time tag received, IOA=' + str(int.from_bytes(ioacmd,'little')) + ', Select set, Pulse=' + pulsemess[pulse:pulse+8] + ', Val=' + regmess[valuem:valuem+9]
 				else:
 					# send actconf.
-					sendpacket=b'\x68\x0e\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x07\x00' + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
+					sendpacket=b'\x68\x0e\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x07' + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
 					senddata(self,sendpacket)
 					# send actterm.
-					sendpacket=b'\x68\x0e\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x0a\x00' + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
+					sendpacket=b'\x68\x0e\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x0a' + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
 					senddata(self,sendpacket)
 					ioacmdv=str(int.from_bytes(ioacmd,'little'))
 					cmdvalue=(int(packet[26:26+2],16) & 0x03)
@@ -486,15 +489,15 @@ def readpacket(self):
 				# if select? then acknowledge only otherwise ack and term then prepare for sending back the status
 				if (int(packet[26:26+2],16) & 0x80) != 0:	# check select bit 1000 0000
 					# send cmd ack
-					sendpacket=b'\x68\x0e\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x07\x00' + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
+					sendpacket=b'\x68\x0e\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x07' + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
 					senddata(self,sendpacket,addtime=1)
 					logmess=dt + ' : SCO with time tag received, IOA=' + str(int.from_bytes(ioacmd,'little')) + ', Select set, Pulse=' + pulsemess[pulse:pulse+8] + ', Val=' + valuemess[valuem:valuem+3]
 				else:
 					# send actconf.
-					sendpacket=b'\x68\x0e\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x07\x00' + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
+					sendpacket=b'\x68\x0e\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x07' + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
 					senddata(self,sendpacket,addtime=1)
 					# send actterm.
-					sendpacket=b'\x68\x0e\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x0a\x00' + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
+					sendpacket=b'\x68\x0e\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x0a' + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
 					senddata(self,sendpacket,addtime=1)
 					ioacmdv=str(int.from_bytes(ioacmd,'little'))
 					cmdvalue=(int(packet[26:26+2],16) & 0x03)
@@ -512,15 +515,15 @@ def readpacket(self):
 				# if select? then acknowledge only otherwise ack and term then prepare for sending back the status
 				if (int(packet[26:26+2],16) & 0x80) != 0:	# check select bit 1000 0000
 					# send cmd ack
-					sendpacket=b'\x68\x0e\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x07\x00' + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
+					sendpacket=b'\x68\x0e\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x07' + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
 					senddata(self,sendpacket,addtime=1)
 					logmess=dt + ' : DCO with time tag received, IOA=' + str(int.from_bytes(ioacmd,'little')) + ', Select set, Pulse=' + pulsemess[pulse:pulse+8] + ', Val=' + valuemess[valuem:valuem+3]
 				else:
 					# send actconf.
-					sendpacket=b'\x68\x0e\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x07\x00' + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
+					sendpacket=b'\x68\x0e\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x07' + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
 					senddata(self,sendpacket,addtime=1)
 					# send actterm.
-					sendpacket=b'\x68\x0e\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x0a\x00' + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
+					sendpacket=b'\x68\x0e\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x0a' + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
 					senddata(self,sendpacket,addtime=1)
 					ioacmdv=str(int.from_bytes(ioacmd,'little'))
 					cmdvalue=(int(packet[26:26+2],16) & 0x03)
@@ -538,15 +541,15 @@ def readpacket(self):
 				# if select? then acknowledge only otherwise ack and term then prepare for sending back the status
 				if (int(packet[26:26+2],16) & 0x80) != 0:	# check select bit 1000 0000
 					# send cmd ack
-					sendpacket=b'\x68\x0e\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x07\x00' + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
+					sendpacket=b'\x68\x0e\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x07' + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
 					senddata(self,sendpacket,addtime=1)
 					logmess=dt + ' : RCO with time tag received, IOA=' + str(int.from_bytes(ioacmd,'little')) + ', Select set, Pulse=' + pulsemess[pulse:pulse+8] + ', Val=' + regmess[valuem:valuem+9]
 				else:
 					# send actconf.
-					sendpacket=b'\x68\x0e\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x07\x00' + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
+					sendpacket=b'\x68\x0e\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x07' + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
 					senddata(self,sendpacket,addtime=1)
 					# send actterm.
-					sendpacket=b'\x68\x0e\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x0a\x00' + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
+					sendpacket=b'\x68\x0e\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x0a' + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
 					senddata(self,sendpacket,addtime=1)
 					ioacmdv=str(int.from_bytes(ioacmd,'little'))
 					cmdvalue=(int(packet[26:26+2],16) & 0x03)
@@ -569,7 +572,7 @@ def sendtelegramind (self,row):
 	if row[2] == '1' or row[2] == '3':	# spi or dpi without time tag
 		# length = 4 control fields + ASDU
 		len=14
-		packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + int(row[2]).to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + b'\x00' + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + int(row[4]).to_bytes(1,'little')
+		packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + int(row[2]).to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + int(row[4]).to_bytes(1,'little')
 		dt = senddata(self,packet)
 		if row[2] == '1':
 			v=int(row[4]) * 3
@@ -582,12 +585,12 @@ def sendtelegramind (self,row):
 		len=21
 		if row[2] == '30':
 			v=int(row[4]) * 3
-			packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + int(row[2]).to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + b'\x00' + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + int(row[4]).to_bytes(1,'little')
+			packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + int(row[2]).to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + int(row[4]).to_bytes(1,'little')
 			dt = senddata(self,packet,addtime=1)
 			self.logfhw.write(dt + ' : SPI, IOA=' + row[3][0:12] + ', Val=' + valuemess[v:v+3] + ' ' + row[10][0:53])
 		else:
 			v=(int(row[4]) - 1) * 3
-			packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + int(row[2]).to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + b'\x00' + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + int(row[4]).to_bytes(1,'little')
+			packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + int(row[2]).to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + int(row[4]).to_bytes(1,'little')
 			dt = senddata(self,packet,addtime=1)
 			self.logfhw.write(dt + ' : DPI, IOA=' + row[3][0:12] + ', Val=' + valuemess[v:v+3] + ' ' + row[10][0:53])
 		# write date in log file.
@@ -596,14 +599,14 @@ def sendtelegramind (self,row):
 		len=16
 		qds=0
 		v=int(float(row[4])*32767)
-		packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + int(row[2]).to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + b'\x00' + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + v.to_bytes(2,'little', signed=True) + qds.to_bytes(1,'little')
+		packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + int(row[2]).to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + v.to_bytes(2,'little', signed=True) + qds.to_bytes(1,'little')
 		dt = senddata(self,packet)
 		self.logfhw.write(dt + ' : NORM AMI, IOA=' + row[3][0:12] + ', Val=' + row[4][0:12] + ' ' + row[10][0:53] + '\n')
 	elif  row[2] == '34':				# meas. normalized with time tag
 		len=23
 		qds=0
 		v=int(float(row[4])*32767)
-		packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + int(row[2]).to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + b'\x00' + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + v.to_bytes(2,'little', signed=True) + qds.to_bytes(1,'little')
+		packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + int(row[2]).to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + v.to_bytes(2,'little', signed=True) + qds.to_bytes(1,'little')
 		dt = senddata(self,packet,addtime=1)
 		self.logfhw.write(dt + ' : NORM AMI, IOA=' + row[3][0:12] + ', Val=' + row[4][0:12] + ' ' + row[10][0:53])
 		self.logfhw.write('\n\t\t\t     with date&time tag: ' + dt + ', Time saving OFF\n')
@@ -611,14 +614,14 @@ def sendtelegramind (self,row):
 		len=16
 		qds=0
 		v=int(row[4])
-		packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + int(row[2]).to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + b'\x00' + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + v.to_bytes(2,'little', signed=True) + qds.to_bytes(1,'little')
+		packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + int(row[2]).to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + v.to_bytes(2,'little', signed=True) + qds.to_bytes(1,'little')
 		dt = senddata(self,packet)
 		self.logfhw.write(dt + ' : SCAL AMI, IOA=' + row[3][0:12] + ', Val=' + row[4][0:12] + ' ' + row[10][0:53] + '\n')
 	elif  row[2] == '35':				# meas. scaled with time tag
 		len=23
 		qds=0
 		v=int(row[4])
-		packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + int(row[2]).to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + b'\x00' + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + v.to_bytes(2,'little', signed=True) + qds.to_bytes(1,'little')
+		packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + int(row[2]).to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + v.to_bytes(2,'little', signed=True) + qds.to_bytes(1,'little')
 		dt = senddata(self,packet,addtime=1)
 		self.logfhw.write(dt + ' : SCAL AMI, IOA=' + row[3][0:12] + ', Val=' + row[4][0:12] + ' ' + row[10][0:53])
 		self.logfhw.write('\n\t\t\t     with date&time tag: ' + dt + ', Time saving OFF\n')
@@ -626,14 +629,14 @@ def sendtelegramind (self,row):
 		len=18
 		qds=0
 		v = int(unpack("I", pack("f", float (row[4])))[0])
-		packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + int(row[2]).to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + b'\x00' + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + v.to_bytes(4,'little') + qds.to_bytes(1,'little')
+		packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + int(row[2]).to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + v.to_bytes(4,'little') + qds.to_bytes(1,'little')
 		dt = senddata(self,packet)
 		self.logfhw.write(dt + ' : FLT AMI, IOA=' + row[3][0:12] + ', Val=' + row[4][0:12] + ' ' + row[10][0:53] + '\n')
 	elif  row[2] == '36':				# meas. float with time tag
 		len=25
 		qds=0
 		v = int(unpack("I", pack("f", float (row[4])))[0])
-		packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + int(row[2]).to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + b'\x00' + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + v.to_bytes(4,'little') + qds.to_bytes(1,'little')
+		packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + int(row[2]).to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + v.to_bytes(4,'little') + qds.to_bytes(1,'little')
 		dt = senddata(self,packet,addtime=1)
 		self.logfhw.write(dt + ' : FLT AMI, IOA=' + row[3][0:12] + ', Val=' + row[4][0:12] + ' ' + row[10][0:53])
 		self.logfhw.write('\n\t\t\t     with date&time tag: ' + dt + ', Time saving OFF\n')
@@ -653,13 +656,13 @@ def sendtelegramgi (self,row,f):
 		if row[2] == '1' or row[2] == '30':
 			v=int(row[4]) * 3
 			typeid=1
-			packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + typeid.to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + b'\x00' + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + int(row[4]).to_bytes(1,'little')
+			packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + typeid.to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + int(row[4]).to_bytes(1,'little')
 			dt = senddata(self,packet)
 			f.write(dt + ' : SPI, IOA=' + row[3][0:12] + ', Val=' + valuemess[v:v+3] + ' ' + row[10][0:53] + '\n')
 		else:
 			v=(int(row[4]) - 1) * 3
 			typeid=3
-			packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + typeid.to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + b'\x00' + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + int(row[4]).to_bytes(1,'little')
+			packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + typeid.to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + int(row[4]).to_bytes(1,'little')
 			dt = senddata(self,packet)
 			f.write(dt + ' : DPI, IOA=' + row[3][0:12] + ', Val=' + valuemess[v:v+3] + ' ' + row[10][0:53] + '\n')
 	elif  row[2] == '9' or row[2] == '34':				# meas. normalized without time tag
@@ -667,7 +670,7 @@ def sendtelegramgi (self,row,f):
 		qds=0
 		typeid=9
 		v=int(float(row[4])*32767)
-		packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + typeid.to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + b'\x00' + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + v.to_bytes(2,'little', signed=True) + qds.to_bytes(1,'little')
+		packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + typeid.to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + v.to_bytes(2,'little', signed=True) + qds.to_bytes(1,'little')
 		dt = senddata(self,packet)
 		f.write(dt + ' : NORM AMI, IOA=' + row[3][0:12] + ', Val=' + row[4][0:12] + ' ' + row[10][0:53] + '\n')
 	elif  row[2] == '11' or row[2] == '35':				# meas. scaled without time tag
@@ -675,7 +678,7 @@ def sendtelegramgi (self,row,f):
 		qds=0
 		typeid=11
 		v=int(row[4])
-		packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + typeid.to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + b'\x00' + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + v.to_bytes(2,'little', signed=True) + qds.to_bytes(1,'little')
+		packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + typeid.to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + v.to_bytes(2,'little', signed=True) + qds.to_bytes(1,'little')
 		dt = senddata(self,packet)
 		f.write(dt + ' : SCAL AMI, IOA=' + row[3][0:12] + ', Val=' + row[4][0:12] + ' ' + row[10][0:53] + '\n')
 	elif  row[2] == '13' or row[2] == '36':				# meas. float without time tag
@@ -683,7 +686,7 @@ def sendtelegramgi (self,row,f):
 		qds=0
 		typeid=13
 		v = int(unpack("I", pack("f", float (row[4])))[0])
-		packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + typeid.to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + b'\x00' + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + v.to_bytes(4,'little') + qds.to_bytes(1,'little')
+		packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + typeid.to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + v.to_bytes(4,'little') + qds.to_bytes(1,'little')
 		dt = senddata(self,packet)
 		f.write(dt + ' : FLT AMI, IOA=' + row[3][0:12] + ', Val=' + row[4][0:12] + ' ' + row[10][0:53] + '\n')
 
@@ -710,13 +713,13 @@ def sendtelegramcmd (self,row):
 		if row[2] == '1':
 			v *= 3
 			typeid=1
-			packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + typeid.to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + b'\x00' + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + v.to_bytes(1,'little')
+			packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + typeid.to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + v.to_bytes(1,'little')
 			dt = senddata(self,packet)
 			self.logfhw.write(dt + ' : SPI, IOA=' + row[3][0:12] + ', Val=' + valuemess[v:v+3] + ' ' + row[10][0:53] + '\n')
 		else:
 			v = (v - 1) * 3
 			typeid=3
-			packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + typeid.to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + b'\x00' + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + v.to_bytes(1,'little')
+			packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + typeid.to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + v.to_bytes(1,'little')
 			dt = senddata(self,packet)
 			self.logfhw.write(dt + ' : DPI, IOA=' + row[3][0:12] + ', Val=' + valuemess[v:v+3] + ' ' + row[10][0:53] + '\n')
 	if row[2] == '30' or row[2] == '31':	# spi or dpi with time tag
@@ -730,13 +733,13 @@ def sendtelegramcmd (self,row):
 		if row[2] == '30':
 			v = value * 3
 			typeid=30
-			packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + typeid.to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + b'\x00' + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + value.to_bytes(1,'little')
+			packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + typeid.to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + value.to_bytes(1,'little')
 			dt = senddata(self,packet,addtime=1)
 			self.logfhw.write(dt + ' : SPI, IOA=' + row[3][0:12] + ', Val=' + valuemess[v:v+3] + ' ' + row[10][0:53])
 		else:
 			v=(value - 1) * 3
 			typeid=31
-			packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + typeid.to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + b'\x00' + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + value.to_bytes(1,'little')
+			packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + typeid.to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + value.to_bytes(1,'little')
 			dt = senddata(self,packet,addtime=1)
 			self.logfhw.write(dt + ' : DPI, IOA=' + row[3][0:12] + ', Val=' + valuemess[v:v+3] + ' ' + row[10][0:53])
 		# write date in log file.
@@ -745,14 +748,14 @@ def sendtelegramcmd (self,row):
 		len=16
 		qds=0
 		v=int(float(row[4])*32767)
-		packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + int(row[2]).to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + b'\x00' + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + v.to_bytes(2,'little', signed=True) + qds.to_bytes(1,'little')
+		packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + int(row[2]).to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + v.to_bytes(2,'little', signed=True) + qds.to_bytes(1,'little')
 		dt = senddata(self,packet)
 		self.logfhw.write(dt + ' : NORM AMI, IOA=' + row[3][0:12] + ', Val=' + row[4][0:12] + ' ' + row[10][0:53] + '\n')
 	if row[2] == '34':				# meas. normalized with time tag
 		len=23
 		qds=0
 		v=int(float(row[4])*32767)
-		packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + int(row[2]).to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + b'\x00' + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + v.to_bytes(2,'little', signed=True) + qds.to_bytes(1,'little')
+		packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + int(row[2]).to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + v.to_bytes(2,'little', signed=True) + qds.to_bytes(1,'little')
 		dt = senddata(self,packet,addtime=1)
 		self.logfhw.write(dt + ' : NORM AMI, IOA=' + row[3][0:12] + ', Val=' + row[4][0:12] + ' ' + row[10][0:53])
 		self.logfhw.write('\n\t\t\t     with date&time tag: ' + dt + ', Time saving OFF\n')
@@ -760,14 +763,14 @@ def sendtelegramcmd (self,row):
 		len=16
 		qds=0
 		v=int(row[4])
-		packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + int(row[2]).to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + b'\x00' + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + v.to_bytes(2,'little', signed=True) + qds.to_bytes(1,'little')
+		packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + int(row[2]).to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + v.to_bytes(2,'little', signed=True) + qds.to_bytes(1,'little')
 		dt = senddata(self,packet)
 		self.logfhw.write(dt + ' : SCAL AMI, IOA=' + row[3][0:12] + ', Val=' + row[4][0:12] + ' ' + row[10][0:53] + '\n')
 	if row[2] == '35':				# meas. scaled with time tag
 		len=23
 		qds=0
 		v=int(row[4])
-		packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + int(row[2]).to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + b'\x00' + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + v.to_bytes(2,'little', signed=True) + qds.to_bytes(1,'little')
+		packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + int(row[2]).to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + v.to_bytes(2,'little', signed=True) + qds.to_bytes(1,'little')
 		dt = senddata(self,packet,addtime=1)
 		self.logfhw.write(dt + ' : SCAL AMI, IOA=' + row[3][0:12] + ', Val=' + row[4][0:12] + ' ' + row[10][0:53])
 		self.logfhw.write('\n\t\t\t     with date&time tag: ' + dt + ', Time saving OFF\n')
@@ -775,14 +778,14 @@ def sendtelegramcmd (self,row):
 		len=18
 		qds=0
 		v = int(unpack("I", pack("f", float (row[4])))[0])
-		packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + int(row[2]).to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + b'\x00' + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + v.to_bytes(4,'little') + qds.to_bytes(1,'little')
+		packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + int(row[2]).to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + v.to_bytes(4,'little') + qds.to_bytes(1,'little')
 		dt = senddata(self,packet)
 		self.logfhw.write(dt + ' : FLT AMI, IOA=' + row[3][0:12] + ', Val=' + row[4][0:12] + ' ' + row[10][0:53] + '\n')
 	if row[2] == '36':				# meas. float with time tag
 		len=25
 		qds=0
 		v = int(unpack("I", pack("f", float (row[4])))[0])
-		packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + int(row[2]).to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + b'\x00' + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + v.to_bytes(4,'little') + qds.to_bytes(1,'little')
+		packet = b'\x68' + len.to_bytes(1,'little') + b'\x00\x00\x00\x00' + int(row[2]).to_bytes(1,'little') + objno.to_bytes(1,'little') + cot.to_bytes(1,'little') + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + int(row[3]).to_bytes(3,'little') + v.to_bytes(4,'little') + qds.to_bytes(1,'little')
 		dt = senddata(self,packet,addtime=1)
 		self.logfhw.write(dt + ' : FLT AMI, IOA=' + row[3][0:12] + ', Val=' + row[4][0:12] + ' ' + row[10][0:53])
 		self.logfhw.write('\n\t\t\t     with date&time tag: ' + dt + ', Time saving OFF\n')
@@ -879,7 +882,7 @@ def githread (self):
 			# send end of GI if not interrupted
 			if self.dataactive:
 				xlen=14
-				packet = b'\x68' + xlen.to_bytes(1,'little') + b'\x00\x00\x00\x00' + b'\x64\x01\x0a\x00' + int(self.rtuno).to_bytes(2,'little') + b'\x00\x00\x00\x14'
+				packet = b'\x68' + xlen.to_bytes(1,'little') + b'\x00\x00\x00\x00' + b'\x64\x01\x0a' + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + b'\x00\x00\x00\x14'
 				dt = senddata(self,packet)
 				self.logfhw.write(dt + ' : GI finished.\n')
 				f.write(dt + ' : GI finished.\n')
@@ -1025,6 +1028,7 @@ class iec104thread (threading.Thread):
 		self.rtunohex = "{:04x}".format(int(rtuno))
 		self.rtunohex = self.rtunohex[2:2+2] + self.rtunohex[0:2]
 		self.rtuno = rtuno
+		self.org = '0'
 		self.dataactive=0
 		self.initialize=0
 		self.rcvtfperiodmin=1000000
@@ -1384,6 +1388,10 @@ class ToolTip(object):
         self.text = text
         if self.tipwindow or not self.text:
             return
+        try:
+            x, y, cx, cy = self.widget.bbox("insert")
+        except (TypeError):
+            pass
         x, y, cx, cy = self.widget.bbox("insert")
         x = x + self.widget.winfo_rootx() + 57
         y = y + cy + self.widget.winfo_rooty() +27
