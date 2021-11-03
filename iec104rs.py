@@ -410,8 +410,7 @@ def readpacket(self):
 				ts=((int(packet[32:32+2],16) & 0x80)>>7)*3
 				ms=packet[28:28+2] + packet[26:26+2]
 				self.logfhw.write(dt + ' : Time sync. received with date (dd-mm-yy): ' + "{:02d}".format(int(packet[34:34+2],16)&0x1f) + '-' + "{:02d}".format(int(packet[36:36+2],16)&0x0f) + '-' + "{:02d}".format(int(packet[38:38+2],16)&0x7f) + ',\n\t\t\t     time (HH:MM:SS.ms): ' + "{:02d}".format(int(packet[32:32+2],16)&0x1f) + ':' + "{:02d}".format(int(packet[30:30+2],16)&0x3f) + ':' + "{:09.6f}".format(float(int(ms,16))/1000) + ', Time saving ' + valuemess[ts:ts+3] + '\n')
-			elif packet[8:8+2] == '2d' and packet[16:16+4] == self.rtunohex:	# Time sync act packet
-			#elif  packet[8:8+12] == ('2d010600' + self.rtunohex):				# sco command without time tag.
+			elif packet[8:8+2] == '2d' and packet[16:16+4] == self.rtunohex:	# sco command without time tag.
 				pulse=((int(packet[26:26+2],16) & 0x7c)>>2)*8
 				valuem=(int(packet[26:26+2],16) & 0x03)*3
 				# if select? then acknowledge only otherwise ack and term then prepare for sending back the status
@@ -434,7 +433,7 @@ def readpacket(self):
 					cmdrtuno=self.rtuno
 					cmdtime=time()
 				self.logfhw.write(logmess + '\n')
-			elif  packet[8:8+12] == ('2e010600' + self.rtunohex):				# dco command without time tag.
+			elif packet[8:8+2] == '2e' and packet[16:16+4] == self.rtunohex:	# dco command without time tag.
 				pulse=((int(packet[26:26+2],16) & 0x7c)>>2)*8
 				valuem=((int(packet[26:26+2],16) & 0x03)-1)*3
 				# if select? then acknowledge only otherwise ack and term then prepare for sending back the status
@@ -457,7 +456,7 @@ def readpacket(self):
 					cmdrtuno=self.rtuno
 					cmdtime=time()
 				self.logfhw.write(logmess + '\n')
-			elif  packet[8:8+12] == ('2f010600' + self.rtunohex):				# rco command without time tag.
+			elif packet[8:8+2] == '2f' and packet[16:16+4] == self.rtunohex:	# rco command without time tag.
 				pulse=((int(packet[26:26+2],16) & 0x7c)>>2)*8
 				valuem=((int(packet[26:26+2],16) & 0x03)-1)*9
 				# if select? then acknowledge only otherwise ack and term then prepare for sending back the status
@@ -480,7 +479,7 @@ def readpacket(self):
 					cmdrtuno=self.rtuno
 					cmdtime=time()
 				self.logfhw.write(logmess + '\n')
-			elif  packet[8:8+12] == ('3a010600' + self.rtunohex):				# sco command with time tag.
+			elif packet[8:8+2] == '3a' and packet[16:16+4] == self.rtunohex:	# sco command with time tag.
 				pulse=((int(packet[26:26+2],16) & 0x7c)>>2)*8
 				valuem=(int(packet[26:26+2],16) & 0x03)*3
 				ts=((int(packet[34:34+2],16) & 0x80)>>7)*3
@@ -506,7 +505,7 @@ def readpacket(self):
 					cmdrtuno=self.rtuno
 					cmdtime=time()
 				self.logfhw.write(logmess + '\n\t\t\t     ' + logtime + '\n')
-			elif  packet[8:8+12] == ('3b010600' + self.rtunohex):				# dco command with time tag.
+			elif packet[8:8+2] == '3b' and packet[16:16+4] == self.rtunohex:	# dco command with time tag.
 				pulse=((int(packet[26:26+2],16) & 0x7c)>>2)*8
 				valuem=((int(packet[26:26+2],16) & 0x03)-1)*3
 				ts=((int(packet[34:34+2],16) & 0x80)>>7)*3
@@ -532,7 +531,7 @@ def readpacket(self):
 					cmdrtuno=self.rtuno
 					cmdtime=time()
 				self.logfhw.write(logmess + '\n\t\t\t     ' + logtime + '\n')
-			elif  packet[8:8+12] == ('3c010600' + self.rtunohex):				# rco command with time tag.
+			elif packet[8:8+2] == '3c' and packet[16:16+4] == self.rtunohex:	# rco command with time tag.
 				pulse=((int(packet[26:26+2],16) & 0x7c)>>2)*8
 				valuem=((int(packet[26:26+2],16) & 0x03)-1)*9
 				ts=((int(packet[34:34+2],16) & 0x80)>>7)*3
