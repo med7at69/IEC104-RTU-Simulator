@@ -293,6 +293,41 @@ python -m nuitka --windows-file-description="IEC104 RTU Simulator" --windows-fil
 
 ===========================================================================
 
+
+Other projects
+
+IEC104 Multiple Masters to Single Slave
+
+https://github.com/med7at69/IEC104-MultipleMasters2SingleSlave
+
+This program will connect multiple masters (SCADA master stations) to single slave (RTU) as defined protocol IEC 60870-5-104. Although the protocol IEC 104 itself doesn’t have a way to do that but the program will play the Man In The Middle role achieve this connection.
+ Any number of masters connected to a slave is forming a group. You can create any number of groups and the program will establish the communication among each group members independent on the other groups. Each master in each group can receive IO status and send commands to the slave RTU independent on the other masters.
+Why may anyone need the IEC104MM2SS program?
+For cyber security reasons, the slave RTU is configured to accept connection from specific number of masters’ IPs. Some RTUs may have limited number of masters to be configured.
+In my company, we were replacing our legacy SCADA system with new one. During the test period we need both two systems’ servers to communicate to the RTUs and station control systems (SCS) simultaneously. We have 2 old servers + 2 new servers at the main control center + 1 server at the backup control center. These total of 5 servers so here is the problem:
+1-	Some RTUs and SCS stations doesn’t have enough entries for all the servers.
+2-	Some old RTUs and SCS stations have many configuration difficulties.
+3-	For about 200 stations it is tedious to configure them many times to add the servers during the test period then to remove the old servers again after that.
+For the above reasons, I wrote the IEC104MM2SS program.
+
+Program features:
+-	Can easily create any number of groups of masters + slave to communicate among them.
+-	the program will establish the communication among each group members independent on the other groups.
+-	Each master in each group can receive IO status and send commands to the slave RTU independent on the other masters.
+-	To not affect the RTU availability reports, program will not accept connections from the master SCADA systems until the program connected first to the corresponding slave RTU. If disconnected from the RTU then it will disconnect all the masters in the same group.
+-	Easy configuration file building (.csv format) by using spreadsheet programs such as MS Excel.
+-	IP/Network filtration for each master entry independently.
+-	Multiple IP:PORT numbers for each slave (RTU/SCS). Program will try the IP:PORT one by one until establish the connection to the slave RTU/SCS.
+-	Linux and windows compatible.
+-	Python native graphical user interface (GUI) (no need for third party solutions).
+-	Multithread operation.
+-	Time synchronization through multiple NTP servers.
+-	Log file for each master/slave connection.
+-	No GUI mode of operation in which the program will work in background silently while only update the log files.
+===========================================================================
+
+
+
 ini file (iec104rs.csv) example with explanations
 
 # ini file - iec104rs.csv,,,,,,,
@@ -395,6 +430,8 @@ IOA data (iodata.csv) example with explanations
 89,Y,13,11002,5.435,0,,,,,,W,W
 
 ===========================================================================
+
+
 
 
 
