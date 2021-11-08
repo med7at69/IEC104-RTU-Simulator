@@ -3,9 +3,12 @@
 #  	By M. Medhat - 7 Feb 2021 - Ver 1.0
 # ******************************************************
 
-If this project help you reduce time to develop, you can let me know :)
+If this project help you reduce time to develop, please spend some of your time to check links below:
 
-[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/donate?hosted_button_id=FV7ECTFM5N55A)
+
+[![Islam](The Fog is Lifting)](https://www.youtube.com/watch?v=bdH16Hz1naI)
+
+The Fog is Lifting' is one of the best holistic presentations a non Muslim can watch about Islam to learn about: its meaning, its beliefs and its concepts.
 
 
 
