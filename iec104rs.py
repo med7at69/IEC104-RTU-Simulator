@@ -870,11 +870,13 @@ def githread (self):
 				#	GI	typeid	IOA	Value	wait(sec)	filterrtu	filtertypid	filterioa	filtervalue	Comment
 				csv_reader = reader(csv_file, delimiter=',')
 				for row in csv_reader:
-					if row[0][0:1] == '!' or not self.dataactive:
+					if not row:
+						pass
+					elif row[0][0:1] == '!' or not self.dataactive:
 						break
-					if not row[0].isdigit() or not row[2].isdigit() or not row[3].isdigit() or not row[4]:
+					elif not row[0].isdigit() or not row[2].isdigit() or not row[3].isdigit() or not row[4]:
 						continue
-					if row[1] == 'Y':
+					elif row[1] == 'Y':
 						for l in range(11,len(row)):
 							row[10] += ' ' + row[l]
 						sendtelegramgi(self,row,f)
@@ -1391,7 +1393,6 @@ class ToolTip(object):
             x, y, cx, cy = self.widget.bbox("insert")
         except (TypeError):
             pass
-        x, y, cx, cy = self.widget.bbox("insert")
         x = x + self.widget.winfo_rootx() + 57
         y = y + cy + self.widget.winfo_rooty() +27
         self.tipwindow = tw = tk.Toplevel(self.widget)
@@ -1654,7 +1655,9 @@ if isfile(initfile):
 		#tmplist=[' ']
 		for row in csv_reader:
 			# if first character of first column in any row = '!' then break
-			if row[0][0:1] == '!' or exitprogram:
+			if not row:
+				pass
+			elif row[0][0:1] == '!' or exitprogram:
 				break
 			# general settings
 			elif row[0] == 'ntp_update_every_sec' and row[1].isdigit():
