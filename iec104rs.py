@@ -401,7 +401,6 @@ def readpacket(self):
 				f.close()
 				self.sendgi=1
 			elif packet[8:8+2] == '67' and (packet[16:16+4] == self.rtunohex or packet[16:16+4] == 'ffff'):	# Time sync act packet
-			#elif  packet[8:8+12] == ('67010600' + self.rtunohex) or packet[8:8+12] == '67010600ffff':		# Time sync act packet
 				# check if required to check filter on type id time sync
 				if self.checkfilter and self.filtertypid == '103':
 					self.checkfilter=''
@@ -557,6 +556,10 @@ def readpacket(self):
 					cmdrtuno=self.rtuno
 					cmdtime=time()
 				self.logfhw.write(logmess + '\n\t\t\t     ' + logtime + '\n')
+			else:		# if not implemented I-Format then just ack by sending S-Format
+				sendpacket=b'\x68\x04\x01\x00' + (self.rxlsb*2).to_bytes(1,'little') + self.rxmsb.to_bytes(1,'little') 
+				senddata(self,sendpacket)
+				self.logfhw.write(dt + ' : Acknowledged TypeID: ' + str(int(packet[8:8+2],16)) + ' without further action\n')
 		self.logfilechanged=1
 
 def sendtelegramind (self,row):
