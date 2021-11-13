@@ -399,7 +399,7 @@ def readpacket(self):
 				f=open(self.logfilenamegi,"a")
 				f.write(dt + ' : GI received.' + '\n')
 				f.close()
-				self.sendgi=1
+				self.sendgi += 1
 			elif packet[8:8+2] == '67' and (packet[16:16+4] == self.rtunohex or packet[16:16+4] == 'ffff'):	# Time sync act packet
 				# check if required to check filter on type id time sync
 				if self.checkfilter and self.filtertypid == '103':
@@ -487,15 +487,15 @@ def readpacket(self):
 				# if select? then acknowledge only otherwise ack and term then prepare for sending back the status
 				if (int(packet[26:26+2],16) & 0x80) != 0:	# check select bit 1000 0000
 					# send cmd ack
-					sendpacket=b'\x68\x0e\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x07' + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
+					sendpacket=b'\x68\x15\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x07' + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
 					senddata(self,sendpacket,addtime=1)
 					logmess=dt + ' : SCO with time tag received, IOA=' + str(int.from_bytes(ioacmd,'little')) + ', Select set, Pulse=' + pulsemess[pulse:pulse+8] + ', Val=' + valuemess[valuem:valuem+3]
 				else:
 					# send actconf.
-					sendpacket=b'\x68\x0e\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x07' + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
+					sendpacket=b'\x68\x15\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x07' + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
 					senddata(self,sendpacket,addtime=1)
 					# send actterm.
-					sendpacket=b'\x68\x0e\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x0a' + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
+					sendpacket=b'\x68\x15\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x0a' + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
 					senddata(self,sendpacket,addtime=1)
 					ioacmdv=str(int.from_bytes(ioacmd,'little'))
 					cmdvalue=(int(packet[26:26+2],16) & 0x03)
@@ -513,15 +513,15 @@ def readpacket(self):
 				# if select? then acknowledge only otherwise ack and term then prepare for sending back the status
 				if (int(packet[26:26+2],16) & 0x80) != 0:	# check select bit 1000 0000
 					# send cmd ack
-					sendpacket=b'\x68\x0e\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x07' + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
+					sendpacket=b'\x68\x15\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x07' + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
 					senddata(self,sendpacket,addtime=1)
 					logmess=dt + ' : DCO with time tag received, IOA=' + str(int.from_bytes(ioacmd,'little')) + ', Select set, Pulse=' + pulsemess[pulse:pulse+8] + ', Val=' + valuemess[valuem:valuem+3]
 				else:
 					# send actconf.
-					sendpacket=b'\x68\x0e\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x07' + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
+					sendpacket=b'\x68\x15\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x07' + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
 					senddata(self,sendpacket,addtime=1)
 					# send actterm.
-					sendpacket=b'\x68\x0e\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x0a' + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
+					sendpacket=b'\x68\x15\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x0a' + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
 					senddata(self,sendpacket,addtime=1)
 					ioacmdv=str(int.from_bytes(ioacmd,'little'))
 					cmdvalue=(int(packet[26:26+2],16) & 0x03)
@@ -539,15 +539,15 @@ def readpacket(self):
 				# if select? then acknowledge only otherwise ack and term then prepare for sending back the status
 				if (int(packet[26:26+2],16) & 0x80) != 0:	# check select bit 1000 0000
 					# send cmd ack
-					sendpacket=b'\x68\x0e\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x07' + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
+					sendpacket=b'\x68\x15\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x07' + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
 					senddata(self,sendpacket,addtime=1)
 					logmess=dt + ' : RCO with time tag received, IOA=' + str(int.from_bytes(ioacmd,'little')) + ', Select set, Pulse=' + pulsemess[pulse:pulse+8] + ', Val=' + regmess[valuem:valuem+9]
 				else:
 					# send actconf.
-					sendpacket=b'\x68\x0e\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x07' + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
+					sendpacket=b'\x68\x15\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x07' + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
 					senddata(self,sendpacket,addtime=1)
 					# send actterm.
-					sendpacket=b'\x68\x0e\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x0a' + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
+					sendpacket=b'\x68\x15\x00\x00\x00\x00' + int(packet[8:8+2],16).to_bytes(1,'little') + b'\x01\x0a' + int(self.org,16).to_bytes(1,'little') + int(self.rtuno).to_bytes(2,'little') + ioacmd + int(packet[26:26+2],16).to_bytes(1,'little')
 					senddata(self,sendpacket,addtime=1)
 					ioacmdv=str(int.from_bytes(ioacmd,'little'))
 					cmdvalue=(int(packet[26:26+2],16) & 0x03)
@@ -560,6 +560,8 @@ def readpacket(self):
 				sendpacket=b'\x68\x04\x01\x00' + (self.rxlsb*2).to_bytes(1,'little') + self.rxmsb.to_bytes(1,'little') 
 				senddata(self,sendpacket)
 				self.logfhw.write(dt + ' : Acknowledged TypeID: ' + str(int(packet[8:8+2],16)) + ' without further action\n')
+				if packet[16:16+4] != self.rtunohex:
+					self.logfhw.write('\t\t\t     Wrong RTU no. received.\n')
 		self.logfilechanged=1
 
 def sendtelegramind (self,row):
@@ -898,7 +900,7 @@ def githread (self):
 			self.updategigui=1
 			#while self.updategigui:
 			#	pass
-			self.sendgi=0
+			self.sendgi -= 1
 			self.logfilechanged=1
 
 def cmdthread (self):
