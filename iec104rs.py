@@ -979,7 +979,7 @@ def gettime_ntp(addr='time.nist.gov'):
             epoch_time = unpack( '!12I', data )[10]
             epoch_time -= TIME1970
             return epoch_time
-    except (timeout, gaierror):
+    except (timeout, gaierror, ConnectionResetError):
         return None
 
 def ntpthread():
