@@ -137,7 +137,7 @@ th=[]
 portnolist=[]
 window=0
 txtbx1thid=0
-txtbx2thid=1
+txtbx2thid=0
 updatetoframe1=0
 updatetoframe2=0
 noofrtu=0
@@ -1743,6 +1743,7 @@ elif noofrtu >=2:
 	copytoframe2(mainth[1])
 else:
 	copytoframe1(mainth[0])
+	copytoframe2(mainth[0])
 
 # all thread started, ready.
 programstarted=1
