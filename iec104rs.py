@@ -307,14 +307,14 @@ def incseqno(self,txrx):
 		self.txmsb=0
 		self.rxlsb=0
 		self.rxmsb=0
-	if txrx == 'TX':
+	elif txrx == 'TX':
 		self.txlsb += 1
 		if self.txlsb == 128:
 			self.txlsb=0
 			self.txmsb += 1
 			if self.txmsb == 256:
 				self.txmsb=0
-	if txrx == 'RX':
+	elif txrx == 'RX':
 		self.rxlsb += 1
 		if self.rxlsb == 128:
 			self.rxlsb=0
@@ -335,6 +335,13 @@ def initiate(self):
 	self.initialize=1
 	self.logfilechanged=1
 
+def isfloat(i):
+	try:
+		float(i)
+	except ValueError:
+		return False
+	return i.replace('+','',1).replace('-','',1).replace('.','',1).isdigit()
+	
 def readpacket(self):
 	global ioacmdv,cmdtype,cmdvalue,cmdtime,cmdrtuno,bufsize,pulsemess,regmess,valuemess
 	packet=''
@@ -824,16 +831,16 @@ def indexthread (self):
 						if (row[0] == ioindex or int(ioindex) == 0) and int(row[2]) in types:
 							indexfound=1
 							# check filter and wait to receive it.
-							if not row[5].isdigit():		# if delay is empty then put it as zero seconds.
+							if not isfloat(row[5]):		# if delay is empty or not float then put it as zero seconds.
 								row[5] = '0'
-							if not row[10].isdigit():		# if filter timeout is empty then put it as zero ms.
+							if not isfloat(row[10]):		# if filter timeout is empty or not float then put it as zero ms.
 								row[10] = '0'
 							self.filtertypid=row[7]
 							self.filterioa=row[8]
 							self.filtervalue=row[9]
 							self.checkfilter = row[7] or row[8] or row[9]
 							filtertimeout=time()
-							while self.checkfilter and ((time() - filtertimeout)*1000 < float(row[10])):
+							while self.checkfilter and ((time() - filtertimeout) < float(row[10])):
 								if stopsendindex:
 									break
 							if (not self.checkfilter):
@@ -1397,7 +1404,7 @@ class ToolTip(object):
         try:
             x, y, cx, cy = self.widget.bbox("insert")
         except (TypeError):
-            pass
+            x = 1;y = 1;cx = 2;cy = 2
         x = x + self.widget.winfo_rootx() + 57
         y = y + cy + self.widget.winfo_rooty() +27
         self.tipwindow = tw = tk.Toplevel(self.widget)

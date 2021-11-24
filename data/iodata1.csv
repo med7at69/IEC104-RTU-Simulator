@@ -10,12 +10,13 @@
 #,"DCO(46,59) - value should equal the IOA of its status.",,,,,,,,,,,
 #,"RCO(47,60) - value should equal the IOA of its status.",,,,,,,,,,,
 #,,,,,,,,,,,,
-#send index entry from rtu if filter conditions received by connected master before timeout=T-out in ms.,,,,,,,,,,,,
-#empty filter entry will not be used for filtering. Example: if rtuno is empty then index entry will be sent regardless the rtuno,,,,,,,,,,,,
-#filters are not used during sending GI entries or during replying to commands.,,,,,,,,,,,,
+"# send index entry from rtu if filter conditions received by connected master before timeout=T-out in second. Example: 0.002 = 2 ms, 3 = 3 sec.",,,,,,,,,,,,
+# empty filter entry will not be used for filtering. Example: if rtuno is empty then index entry will be sent regardless the rtuno,,,,,,,,,,,,
+# filters are not used during sending GI entries or during replying to commands.,,,,,,,,,,,,
+"# wait sec: Program will wait for 'wait sec' after sending the index entry. Not used in GI. Example: 0.01 = 10 ms, 5 = 5 sec.",,,,,,,,,,,,
 #,,,,,,filter -------------------------------- conditions,,,,,,
 #,,,,,,if,and if,and if,and if,filter,,
-#index,GI,typeid,IOA,Value,wait sec,rtu no,type id,ioa,value,T-out(ms),Comment,
+#index,GI,typeid,IOA,Value,wait sec,rtu no,type id,ioa,value,T-out(s),Comment,
 #,--,------,---,-----,-----------,-----------,-----------,-----------,-----------,-----------,-----------,
 #------------------------,,SCO command ------------------------------,,,,,,,,,,
 #,,,,,,,,,,,,
@@ -43,7 +44,7 @@
 301,Y,31,313,1,0,,,,,,H-LN01BAY CTRL,H-LN01BAY CTRL
 #!End GI,N,31,314,1,0,,,,,,,
 301,Y,31,315,1,0,,,,,,H-LN01Q0,H-LN01Q0
-317,Y,31,317,2,0,,46,21001,2,5000,H-LN01Q1,H-LN01Q1
+317,Y,31,317,2,3,,46,21001,2,5000,H-LN01Q1,H-LN01Q1
 317,Y,31,319,2,0,,,,,,H-LN01Q3,H-LN01Q3
 321,Y,31,321,2,0,,,,,,K-C2  CAP CTRL,K-C2  CAP CTRL
 323,Y,31,323,2,0,,,,,,K-C2  CAP MODE,K-C2  CAP MODE
