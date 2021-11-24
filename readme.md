@@ -109,7 +109,7 @@ Program operation is based on the following files:
 	
 	c. Any number of RTUs or systems to be simulated by the program.
 	
-2-	IOA database file (for example iodata.csv): It is a comma separated values file format or “.csv” which should be in folder “data”. Folder “Data” should be in the same folder where the program starts in. In the file you can define the IOA signals such that SPI, DPI, NVA, SVA, FLT, SCO, DCO, RCO. Each RTU may have separated IOA data file or multiple RTUs can share the same IOA signals data file. In the IOA database file, IO signals are indexed and grouped by index numbers. You can send IO signals from all RTUs to the connected SCADA master stations at once by using index numbers. For monitoring IO (SPI, DPI, AMI) a filter conditions could be added, and program will wait (for time out in ms) to receive filter conditions before sending the IO signal. Also, a delay time in seconds could be applied after sending each IO. Filter conditions will not be used during sending “GI” signals or command reply.
+2-	IOA database file (for example iodata.csv): It is a comma separated values file format or “.csv” which should be in folder “data”. Folder “Data” should be in the same folder where the program starts in. In the file you can define the IOA signals such that SPI, DPI, NVA, SVA, FLT, SCO, DCO, RCO. Each RTU may have separated IOA data file or multiple RTUs can share the same IOA signals data file. In the IOA database file, IO signals are indexed and grouped by index numbers. You can send IO signals from all RTUs to the connected SCADA master stations at once by using index numbers. For monitoring IO (SPI, DPI, AMI) a filter conditions could be added, and program will wait (for time out in ‘sec’ decimal point value) to receive filter conditions before sending the IO signal. Also, a delay time in seconds could be applied after sending each IO. Filter conditions will not be used during sending “GI” signals or command reply.
 
 3-	Log files for all RTUs are saved in folder “log”. Folder “log” will be created in the same folder where the program starts in.
 
@@ -129,7 +129,7 @@ When the program starts it will:
 
 7-	If index typed is “0” then program will send all IOA to all connected RTUs for the typed time duration at once.
 
-8-	If any monitoring IO (SPI, DPI, AMI) in the IOA database csv file has filter conditions defined then the program will wait (for time out in ms) to receive filter conditions before sending the IO signal. Also, if a delay time in seconds is defined then it will be applied after sending each IO.
+8-	If any monitoring IO (SPI, DPI, AMI) in the IOA database csv file has filter conditions defined then the program will wait (for time out in ‘sec’ decimal point value) to receive filter conditions before sending the IO signal. Also, if a delay time in seconds is defined then it will be applied after sending each IO.
 
 9-	Filter conditions will not be used during sending “GI” signals or command reply.
 
@@ -241,7 +241,7 @@ General notes:
 	
 	o Signal value: For command, the value should contain the status (SPI, DPI, or AMI) IOA address to be submitted as a response to the connected SCADA system when receiving the command. This way, full command simulation could be achieved.
 	
-	o Wait (sec): delay time in seconds to be added after sending each IOA signal.
+	o Wait (sec): delay time in seconds decimal point value to be added after sending each IOA signal.
 	
 	o Filter conditions: Program will wait to receive the defined filter conditions before sending the IOA signal. If any filter is empty, then it will not be used. For example, if “rtu” entry is empty then IOA signal will be submitted regardless of the RTU number. Filter conditions will not be used during sending “GI” signals or command reply.
 	
@@ -253,7 +253,7 @@ General notes:
 		
 		 Value: received telegram should have this specific signal “value”.
 		
-		 Time out (ms): program will wait for “time out” in milliseconds to receive the filter conditions(s).
+		 Time out (s): program will wait for “time out” ‘sec’ decimal point value to receive the filter conditions(s).
 		
 	o Comment: Sequential columns (maximum 53 characters) could be used to represent signal and feeder names or any other comments to be written in the RTU log file.
 
@@ -385,7 +385,7 @@ IOA data (iodata.csv) example with explanations
 #filters are not used during sending GI entries or during replying to commands.,,,,,,,,,,,,
 #,,,,,,filter -------------------------------- conditions,,,,,,
 #,,,,,,if,and if,and if,and if,filter,,
-#index,GI,typeid,IOA,Value,wait sec,rtu no,type id,ioa,value,T-out(ms),Comment,
+#index,GI,typeid,IOA,Value,wait sec,rtu no,type id,ioa,value,T-out(s),Comment,
 #,--,------,---,-----,-----------,-----------,-----------,-----------,-----------,-----------,-----------,
 #------------------------,,SCO command ------------------------------,,,,,,,,,,
 #,,,,,,,,,,,,

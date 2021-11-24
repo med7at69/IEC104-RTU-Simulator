@@ -340,7 +340,8 @@ def isfloat(i):
 		float(i)
 	except ValueError:
 		return False
-	return i.replace('+','',1).replace('-','',1).replace('.','',1).isdigit()
+	return True
+	#return i.replace('+','',1).replace('-','',1).replace('.','',1).isdigit()
 	
 def readpacket(self):
 	global ioacmdv,cmdtype,cmdvalue,cmdtime,cmdrtuno,bufsize,pulsemess,regmess,valuemess
