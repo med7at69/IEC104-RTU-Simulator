@@ -340,7 +340,7 @@ def isfloat(i):
 		float(i)
 	except ValueError:
 		return False
-	return True
+	return ('nan' not in i.lower())
 	#return i.replace('+','',1).replace('-','',1).replace('.','',1).isdigit()
 	
 def readpacket(self):
@@ -1234,6 +1234,8 @@ def applyaction(self):
 	cursel=self.cbx_action.current()
 	if cursel == 0:
 		# open log file
+		if self.logfilechanged:
+			self.logfhw.flush()
 		system(f'start notepad {self.logfilename}')
 	elif cursel == 1:
 		# open iodata file
