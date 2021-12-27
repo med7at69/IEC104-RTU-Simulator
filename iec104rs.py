@@ -58,7 +58,7 @@ from ipaddress import ip_address,ip_network
 import threading
 from os import remove,stat,mkdir,system,name
 from datetime import datetime
-from socket import socket,AF_INET,SOCK_STREAM,SOL_SOCKET,SO_REUSEADDR,SHUT_RDWR,error,timeout,SOCK_DGRAM,gaierror
+from socket import socket,AF_INET,SOCK_STREAM,SOL_SOCKET,SO_REUSEADDR,SHUT_RDWR,error,timeout,SOCK_DGRAM,gaierror,IPPROTO_TCP,TCP_NODELAY
 from binascii import hexlify
 from signal import signal,SIGTERM
 from struct import unpack,pack
@@ -190,6 +190,7 @@ def opensocket(port):
 	# open socket
 	s=socket(AF_INET, SOCK_STREAM)
 	s.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+	s.setsockopt(IPPROTO_TCP, TCP_NODELAY, 1)
 	s.bind(('', port))
 	s.listen(1)
 	return s
@@ -257,7 +258,9 @@ def readdata(self):
 					if packetlen != b'0':
 						data = hexlify(self.conn.recv(packetlen))
 						self.databuffer[self.wrpointer + 1] = [data.decode(), str(dt)]
+						self.c_sentnorec.acquire()
 						self.sentnorec=0
+						self.c_sentnorec.release()
 						self.timeidle=time()
 						if self.wrpointer == (bufsize - 1):
 							self.wrpointer=-1
@@ -270,12 +273,19 @@ def readdata(self):
 def senddata(self,data,addtime=0):
 	while not len(self.ready_to_write):
 		pass
-	while self.insenddata:
-		pass
-	self.insenddata=1
+	self.c_senddata.acquire()
+	#while self.insenddata:
+	#	pass
+	#self.insenddata=1
 	# wait if exceeded k packets send without receive.
-	while self.sentnorec > self.kpackets:
-		pass
+	oktosend = 0
+	while True:
+		self.c_sentnorec.acquire()
+		if self.sentnorec < self.kpackets:
+			oktosend = 1
+		self.c_sentnorec.release()
+		if oktosend:
+			break
 	dt = datetime.now()
 	if addtime:
 		# prepare CP56Time2a time
@@ -292,13 +302,16 @@ def senddata(self,data,addtime=0):
 			data1 = data[0:2] + (self.txlsb*2).to_bytes(1,'little') + self.txmsb.to_bytes(1,'little') + (self.rxlsb*2).to_bytes(1,'little') + self.rxmsb.to_bytes(1,'little') + data[6:]
 			self.conn.sendall(data1)
 			incseqno(self,'TX')
+			self.c_sentnorec.acquire()
 			self.sentnorec += 1
+			self.c_sentnorec.release()
 		else:
 			self.conn.sendall(data)
 	except (error, OSError, ValueError, AttributeError):
 		pass
 	self.timeidle=time()
-	self.insenddata=0
+	#self.insenddata=0
+	self.c_senddata.release()
 	return str(dt)
 
 def incseqno(self,txrx):
@@ -328,7 +341,9 @@ def initiate(self):
 	self.statuscolor='red'
 	self.connectedatvalue=' '
 	self.updatestatusgui=1
+	self.c_sentnorec.acquire()
 	self.sentnorec=0
+	self.c_sentnorec.release()
 	self.rcvtfperiodmin=1000000
 	self.time1=0
 	# set initialize flag
@@ -834,7 +849,7 @@ def indexthread (self):
 							# check filter and wait to receive it.
 							if not isfloat(row[5]):		# if delay is empty or not float then put it as zero seconds.
 								row[5] = '0'
-							if not isfloat(row[10]):		# if filter timeout is empty or not float then put it as zero ms.
+							if not isfloat(row[10]):		# if filter timeout is empty or not float then put it as zero sec.
 								row[10] = '0'
 							self.filtertypid=row[7]
 							self.filterioa=row[8]
@@ -1046,7 +1061,7 @@ class iec104thread (threading.Thread):
 		self.dataactive=0
 		self.initialize=0
 		self.rcvtfperiodmin=1000000
-		self.insenddata=0
+		#self.insenddata=0
 		self.sentnorec=0
 		self.acceptnetsys=[]
 		self.kpackets=12
@@ -1089,6 +1104,10 @@ class iec104thread (threading.Thread):
 		self.rdpointer=-1
 		self.wrpointer=-1
 		self.databuffer=[0 for i in range(bufsize+1)]
+		# thread locks
+		self.c_sentnorec = threading.Condition()
+		self.c_senddata = threading.Condition()
+
 		self.ready_to_write=[]
 		# GUI variables
 		self.filternet=''
