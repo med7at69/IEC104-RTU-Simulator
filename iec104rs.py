@@ -190,7 +190,7 @@ def opensocket(port):
 	# open socket
 	s=socket(AF_INET, SOCK_STREAM)
 	s.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-	s.setsockopt(IPPROTO_TCP, TCP_NODELAY, 1)
+	#s.setsockopt(IPPROTO_TCP, TCP_NODELAY, 1)
 	s.bind(('', port))
 	s.listen(1)
 	return s
